@@ -45,8 +45,7 @@ class Xfbin:
         result = dict()
 
         for p in range(len(self.pages)):
-            result[f'Page{p}'] = [c for c in self.pages[p].chunks if type(
-                c) != NuccChunkPage and type(c) != NuccChunkNull]
+            result[f'Page{p}'] = [c for c in self.pages[p].chunks if type(c) not in (NuccChunkPage, NuccChunkNull)]
 
         return result
 

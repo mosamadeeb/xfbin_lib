@@ -49,8 +49,7 @@ def main():
         chunk_dict = xfbin.get_page_chunk_dict().items()
 
     for k, v in chunk_dict:
-        page_path = os.path.join(args.output, k.__qualname__[len(
-            NuccChunk.__qualname__):] if args.sort_types else k)
+        page_path = os.path.join(args.output, k.__qualname__[len(NuccChunk.__qualname__):] if args.sort_types else k)
         os.mkdir(page_path)
 
         for c in v:

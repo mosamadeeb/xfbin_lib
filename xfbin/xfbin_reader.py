@@ -23,8 +23,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
 
     chunks = list()
     for m in table.chunkMaps:
-        chunk = NuccChunk.create_from_nucc_type(
-            table.chunkTypes[m.chunkTypeIndex])
+        chunk = NuccChunk.create_from_nucc_type(table.chunkTypes[m.chunkTypeIndex])
         chunk.filePath = table.filePaths[m.filePathIndex]
         chunk.name = table.chunkNames[m.chunkNameIndex]
         chunks.append(chunk)
