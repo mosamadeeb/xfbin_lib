@@ -70,10 +70,12 @@ class BrChunkMap(BrStruct):
         self.filePathIndex = br.read_uint32()
         self.chunkNameIndex = br.read_uint32()
 
+
 class BrchunkMapReference(BrStruct):
     def __br_read__(self, br: BinaryReader):
         self.chunkNameIndex = br.read_uint32()
         self.chunkMapIndex = br.read_uint32()
+
 
 class BrChunk(BrStruct):
     def __br_read__(self, br: BinaryReader):

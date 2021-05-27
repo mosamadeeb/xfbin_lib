@@ -1,16 +1,34 @@
+from typing import List
+
 from binary_reader import BinaryReader
 
 
 class NuccChunk:
     name: str
     filePath: str
+    data: bytearray
 
-    def read_data(self, br: BinaryReader):
+    extension: str
+
+    def __init__(self):
+        self.extension = ''
+
+    def init_data(self, br: BinaryReader):
         self.data = br.buffer()
+        br.seek(0)
 
     @classmethod
-    def from_nucc_type(cls, s: str) -> 'NuccChunk':
-        return globals().get(s[0].upper() + s[1:], cls)()
+    def get_nucc_type_from_str(cls, s: str) -> type:
+        return globals().get(s[0].upper() + s[1:], cls)
+
+    @classmethod
+    def create_from_nucc_type(cls, s: str) -> 'NuccChunk':
+        return cls.get_nucc_type_from_str(s)()
+
+    @classmethod
+    def get_all_nucc_types(cls) -> List[type]:
+        # This will only return types with names that start with this class's name (but are not this class)
+        return [n for (k, n) in globals() if k.startswith(cls.__qualname__) and len(k) > len(cls.__qualname__)]
 
 
 class NuccChunkNull(NuccChunk):
@@ -19,7 +37,8 @@ class NuccChunkNull(NuccChunk):
 
 
 class NuccChunkPage(NuccChunk):
-    def read_data(self, br: BinaryReader):
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
         self.pageSize = br.read_uint32()
         self.referenceCount = br.read_uint32()
 
@@ -30,48 +49,72 @@ class NuccChunkIndex(NuccChunk):
 
 
 class NuccChunkTexture(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.nut'
 
 
 class NuccChunkDynamics(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.dynamics'
 
 
 class NuccChunkAnm(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.anm'
 
 
 class NuccChunkClump(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.clump'
 
 
 class NuccChunkModel(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.nud'
 
 
 class NuccChunkMaterial(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.material'
 
 
 class NuccChunkCoord(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.coord'
 
 
 class NuccChunkBillboard(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.billboard'
 
 
 class NuccChunkTrail(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.trail'
 
 
 class NuccChunkCamera(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.cam'
 
 
 class NuccChunkParticle(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.particle'
 
 
 class NuccChunkBinary(NuccChunk):
-    pass
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+        self.extension = '.bin'
