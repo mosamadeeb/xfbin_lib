@@ -1,6 +1,6 @@
-from typing import List
+from binary_reader import *
 
-from binary_reader import BinaryReader
+from .br.br_nud import BrNud
 
 
 class NuccChunk:
@@ -26,7 +26,7 @@ class NuccChunk:
         return cls.get_nucc_type_from_str(s)()
 
     @classmethod
-    def get_all_nucc_types(cls) -> List[type]:
+    def get_all_nucc_types(cls):
         # This will only return types with names that start with this class's name (but are not this class)
         return [n for (k, n) in globals() if k.startswith(cls.__qualname__) and len(k) > len(cls.__qualname__)]
 
@@ -76,6 +76,35 @@ class NuccChunkModel(NuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
         self.extension = '.nud'
+
+        self.field00 = br.read_uint16()
+        self.field02 = br.read_uint16()
+
+        self.flag0 = br.read_uint8()
+        self.flag1 = br.read_uint8()
+        self.flag2 = br.read_uint8()
+        self.flag3 = br.read_uint8()
+
+        self.field08 = br.read_uint32()
+        self.field0C = br.read_uint32()
+        self.field10 = br.read_uint32()
+        self.field14 = br.read_uint32()
+
+        self.nudSize = br.read_uint32()
+
+        if self.flag1 & 0x04:
+            self.floats = br.read_float(6)
+
+        try:
+            self.nud = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nudSize], Endian.BIG).read_struct(BrNud)
+        except:
+            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
+            self.nud = None
+        finally:
+            br.seek(self.nudSize, Whence.CUR)
+
+        self.polySetCount = br.read_uint16()
+        self.polySetValues = br.read_uint32(self.polySetCount)
 
 
 class NuccChunkMaterial(NuccChunk):
