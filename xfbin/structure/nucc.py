@@ -1,5 +1,4 @@
-from binary_reader import *
-
+from ..util import *
 from .br import *
 
 

@@ -1,10 +1,9 @@
 from typing import Union
 
-from binary_reader import *
-
 from .structure.br.br_xfbin import BrXfbin
 from .structure.nucc import NuccChunk, NuccChunkPage
 from .structure.xfbin import Page, Xfbin
+from .util import *
 
 
 def read_xfbin(file: Union[str, bytearray]) -> Xfbin:

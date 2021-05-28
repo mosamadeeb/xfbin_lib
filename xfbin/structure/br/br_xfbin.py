@@ -1,6 +1,6 @@
 from typing import List
 
-from binary_reader import *
+from ...util import *
 
 
 class BrXfbin(BrStruct):

@@ -1,7 +1,7 @@
 from enum import IntEnum
 from typing import List, Optional, Tuple, Union
 
-from binary_reader import *
+from ...util import *
 
 
 class BrNud(BrStruct):

@@ -1,4 +1,4 @@
-from binary_reader import *
+from ...util import *
 
 
 class BrNut(BrStruct):
