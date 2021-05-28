@@ -1,6 +1,6 @@
 from binary_reader import *
 
-from .br.br_nud import BrNud
+from .br import *
 
 
 class NuccChunk:
@@ -52,6 +52,21 @@ class NuccChunkTexture(NuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
         self.extension = '.nut'
+
+        self.field00 = br.read_uint16()
+        self.width = br.read_uint16()
+        self.height = br.read_uint16()
+        self.field06 = br.read_uint16()
+
+        self.nutSize = br.read_uint32()
+
+        try:
+            self.nut = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nutSize], Endian.BIG).read_struct(BrNut)
+        except:
+            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
+            self.nut = None
+        finally:
+            br.seek(self.nutSize, Whence.CUR)
 
 
 class NuccChunkDynamics(NuccChunk):
