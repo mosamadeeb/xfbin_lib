@@ -39,6 +39,9 @@ class BrNud(BrStruct):
         for g in self.meshGroups:
             g.meshes = br.read_struct(BrMesh, g.meshCount, self)
 
+            if g.meshCount == 1:
+                g.meshes = (g.meshes,)
+
 
 class BrMeshGroup(BrStruct):
     SIZE = 0x30
@@ -80,7 +83,7 @@ class BrMesh(BrStruct):
 
         # Faces
         with br.seek_to(self.polyClumpStart):
-            self.faces = br.read_uint16(self.faceCount)
+            self.faces = br.read_int16(self.faceCount)
 
         # UV + Vertices
         with br.seek_to(self.vertClumpStart):
