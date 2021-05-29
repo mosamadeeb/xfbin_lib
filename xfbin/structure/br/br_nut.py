@@ -52,9 +52,7 @@ class BrNutTexture(BrStruct):
 
         if self.mipmapCount > 1:
             self.mipmapSizes = br.read_uint32(self.mipmapCount)
-
-            if br.pos() % 0x10:
-                br.seek(0x10 - (br.pos() % 0x10), Whence.CUR)
+            br.align_pos(0x10)
 
         # eXt and GIDX
         br.seek(0x18, Whence.CUR)

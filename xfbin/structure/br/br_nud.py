@@ -33,14 +33,8 @@ class BrNud(BrStruct):
 
         self.meshGroups: Tuple[BrMeshGroup] = br.read_struct(BrMeshGroup, self.meshGroupCount, self)
 
-        if self.meshGroupCount == 1:
-            self.meshGroups = (self.meshGroups,)
-
         for g in self.meshGroups:
             g.meshes = br.read_struct(BrMesh, g.meshCount, self)
-
-            if g.meshCount == 1:
-                g.meshes = (g.meshes,)
 
 
 class BrMeshGroup(BrStruct):

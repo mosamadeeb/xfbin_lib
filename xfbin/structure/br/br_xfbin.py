@@ -59,8 +59,7 @@ class BrChunkTable(BrStruct):
             self.chunkNames.append(br.read_str())
 
         # Align after reading strings
-        br.seek(-1, Whence.CUR)
-        br.seek(4 - (br.pos() % 4), Whence.CUR)
+        br.align_pos(4)
 
         self.chunkMaps: List[BrChunkMap] = br.read_struct(BrChunkMap, self.chunkMapCount)
         self.chunkMapIndices = br.read_uint32(self.chunkMapIndicesCount)
