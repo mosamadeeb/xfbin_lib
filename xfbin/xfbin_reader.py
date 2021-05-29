@@ -7,6 +7,10 @@ from .util import *
 
 
 def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
+    """Reads an XFBIN file and returns an Xfbin object.
+    :param file: Path to file as a string, or bytes-like object containing the file
+    :return: The Xfbin object
+    """
     if isinstance(file, str):
         with open(file, 'rb') as f:
             file_bytes = f.read()
@@ -20,6 +24,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
 
     xfbin = Xfbin()
 
+    # Create chunks with the correct type from the chunk map
     chunks = list()
     for m in table.chunkMaps:
         chunk = NuccChunk.create_from_nucc_type(table.chunkTypes[m.chunkTypeIndex])
@@ -32,23 +37,29 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
     first_chunk_index = -1
     page_chunks = list()
 
+    # Add chunks to pages based on the chunk map indices list
     for c in br_xfbin.chunks:
+        # Get index of current chunk in the page
         current_index = table.chunkMapIndices[page_index + c.chunkMapIndex]
 
         if first_chunk_index == -1:
             first_chunk_index = current_index
 
+        # Initialize the NuccChunk with its data
         chunk: NuccChunk = chunks[current_index]
         chunk.init_data(BinaryReader(c.data, Endian.BIG))
         page_chunks.append(chunk)
 
         if isinstance(chunk, NuccChunkPage):
+            # "Flip" the page once we reach a nuccChunkPage chunk
             page = Page()
             page.chunks.extend(page_chunks)
 
+            # TODO: References should be added to the individual chunks using them, instead of storing them in the page
             for r in table.chunkMapReferences[reference_index: reference_index + chunk.referenceCount]:
                 page.references.append(chunks[page_index + r.chunkMapIndex])
 
+            # Add the page size to the current page index to "flip" to the next page
             page_index += chunk.pageSize
             reference_index += chunk.referenceCount
             first_chunk_index = -1

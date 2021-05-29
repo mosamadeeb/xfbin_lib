@@ -41,14 +41,14 @@ def main():
 
     os.mkdir(args.output)
 
+    # Read the file
     xfbin = read_xfbin(args.input)
 
-    if args.sort_types:
-        chunk_dict = xfbin.get_type_chunk_dict().items()
-    else:
-        chunk_dict = xfbin.get_page_chunk_dict().items()
+    # Get a dictionary of chunks based on page or chunk type
+    chunk_dict = (xfbin.get_type_chunk_dict() if args.sort_types else xfbin.get_page_chunk_dict()).items()
 
     for k, v in chunk_dict:
+        # Create a folder with the chunk's type as its name (or page number)
         page_path = os.path.join(args.output, k.__qualname__[len(NuccChunk.__qualname__):] if args.sort_types else k)
         os.mkdir(page_path)
 
