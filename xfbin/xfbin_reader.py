@@ -59,6 +59,10 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
             for r in table.chunkMapReferences[reference_index: reference_index + chunk.referenceCount]:
                 page.references.append(chunks[page_index + r.chunkMapIndex])
 
+            # Finish setting up each chunk, when needed
+            for ch in page.chunks:
+                ch.finalize_data(br_xfbin, page, page_index)
+
             # Add the page size to the current page index to "flip" to the next page
             page_index += chunk.pageSize
             reference_index += chunk.referenceCount

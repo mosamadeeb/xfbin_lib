@@ -1,3 +1,4 @@
+from typing import List
 from ..util import *
 from .br import *
 
@@ -15,6 +16,9 @@ class NuccChunk:
     def init_data(self, br: BinaryReader):
         self.data = br.buffer()
         br.seek(0)
+
+    def finalize_data(self, br_xfbin: BrXfbin, page: 'Page', page_index: int):
+        pass
 
     @classmethod
     def get_nucc_type_from_str(cls, s: str) -> type:
@@ -117,8 +121,13 @@ class NuccChunkModel(NuccChunk):
         finally:
             br.seek(self.nudSize, Whence.CUR)
 
-        self.polySetCount = br.read_uint16()
-        self.polySetValues = br.read_uint32(self.polySetCount)
+        self.materialCount = br.read_uint16()
+        self.materialIndices = br.read_uint32(self.materialCount)
+
+    def finalize_data(self, br_xfbin: BrXfbin, page: 'Page', page_index: int):
+        self.materialChunks: List[NuccChunkMaterial] = list()
+        for i in self.materialIndices:
+            self.materialChunks.append(br_xfbin.chunkTable.chunkMapIndices[page_index + i])
 
 
 class NuccChunkMaterial(NuccChunk):
