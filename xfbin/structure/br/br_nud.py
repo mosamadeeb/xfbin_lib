@@ -4,6 +4,8 @@ from typing import List, Optional, Tuple, Union
 from ...util import *
 
 
+# Based on Smash Forge Nud implementation
+# https://github.com/jam1garner/Smash-Forge/blob/master/Smash%20Forge/Filetypes/Models/Nuds/NUD.cs
 class BrNud(BrStruct):
     def __br_read__(self, br: BinaryReader) -> None:
         self.magic = br.read_str(4)

@@ -1,6 +1,8 @@
 from ...util import *
 
 
+# Based on Smash Forge Nut implementation
+# https://github.com/jam1garner/Smash-Forge/blob/master/Smash%20Forge/Filetypes/Textures/NUT.cs
 class BrNut(BrStruct):
     def __br_read__(self, br: BinaryReader) -> None:
         self.magic = br.read_str(4)
