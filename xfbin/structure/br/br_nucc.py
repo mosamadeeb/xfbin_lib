@@ -63,13 +63,14 @@ class BrNuccChunkTexture(BrNuccChunk):
         # Update the data range so that the parser can write the nut only
         self.data = br.buffer()[br.pos(): br.pos() + self.nutSize]
 
+        # Skip the nut size
+        br.seek(self.nutSize, Whence.CUR)
+
         try:
             self.brNut = BinaryReader(self.data, Endian.BIG).read_struct(BrNut)
         except:
             print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNut = None
-        finally:
-            br.seek(self.nutSize, Whence.CUR)
 
 
 class BrNuccChunkDynamics(BrNuccChunk):
@@ -155,13 +156,14 @@ class BrNuccChunkModel(BrNuccChunk):
         # Update the data range so that the parser can write the nud only
         self.data = br.buffer()[br.pos(): br.pos() + self.nudSize]
 
+        # Skip the nud size
+        br.seek(self.nudSize, Whence.CUR)
+
         try:
             self.brNud = BinaryReader(self.data, Endian.BIG).read_struct(BrNud)
         except:
             print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNud = None
-        finally:
-            br.seek(self.nudSize, Whence.CUR)
 
         self.materialCount = br.read_uint16()
         self.materialIndices = br.read_uint32(self.materialCount)

@@ -128,6 +128,7 @@ class CoordNode:
     children: List['CoordNode']
 
     def __init__(self, coord: BrNuccChunkCoord):
+        self.name = coord.name
         self.parent = None
         self.children = list()
 
@@ -152,7 +153,7 @@ class NuccChunkModel(NuccChunk):
         self.extension = '.nud'
 
         # Create a Nud from the BrNud
-        self.nud = Nud(br_chunk.brNud)
+        self.nud = Nud(self.name, br_chunk.brNud)
 
         # Get the material chunks
         self.material_chunks: List[NuccChunkMaterial] = list()

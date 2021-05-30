@@ -7,13 +7,24 @@ class Nud:
     name: str  # chunk name
     mesh_groups: List['NudMeshGroup']
 
-    def __init__(self, br_nud: BrNud):
-        pass
+    def __init__(self, name, br_nud: BrNud):
+        self.name = name
+
+        self.mesh_groups = list()
+        for br_mesh_group in br_nud.meshGroups:
+            self.mesh_groups.append(NudMeshGroup(br_mesh_group))
 
 
 class NudMeshGroup:
     name: str
     meshes: List['NudMesh']
+
+    def __init__(self, br_mesh_group: BrNudMeshGroup):
+        self.name = br_mesh_group.name
+
+        self.meshes = list()
+        for br_mesh in br_mesh_group.meshes:
+            self.meshes.append(NudMesh(br_mesh))
 
 
 class NudMesh:
@@ -21,16 +32,15 @@ class NudMesh:
     faces: List[Tuple[int, int, int]]
     materials: List['NudMaterial']
 
-    def add_vertices(self, vertices: List[BrVertex]):
+    def __init__(self, br_mesh: BrNudMesh):
+        self.add_vertices(br_mesh.vertices)
+        self.add_faces(br_mesh.faces)
+        self.add_materials(br_mesh.materials)
+
+    def add_vertices(self, vertices: List[BrNudVertex]):
         self.vertices = list()
-        for v in vertices:
-            self.vertices.append(
-                NudVertex(v.position,
-                          v.normals,
-                          v.biTangents[:3],
-                          v.tangents[:3],
-                          tuple(map(lambda x: int(x), v.color)),
-                          v.uv))
+        for br_vertex in vertices:
+            self.vertices.append(NudVertex(br_vertex))
 
     def add_faces(self, faces: List[int]):
         faces = iter(faces)
@@ -62,8 +72,8 @@ class NudMesh:
         except StopIteration:
             pass
 
-    def add_materials(self):
-        pass
+    def add_materials(self, materials: List[BrNudMaterial]):
+        self.materials = list()
 
 
 class NudVertex:
@@ -71,16 +81,24 @@ class NudVertex:
     normal: Tuple[float, float, float]
     bitangent: Tuple[float, float, float]
     tangent: Tuple[float, float, float]
+
     color: Tuple[int, int, int, int]
     uv: List[Tuple[float, float]]
 
-    def __init__(self, position, normal, bitangent, tangent, color, uv):
-        self.position = position
-        self.normal = normal
-        self.bitangent = bitangent
-        self.tangent = tangent
-        self.color = color
-        self.uv = uv
+    bone_ids: Tuple[int, int, int, int]
+    bone_weights: Tuple[float, float, float, float]
+
+    def __init__(self, br_vertex: BrNudVertex):
+        self.position = br_vertex.position
+        self.normal = br_vertex.normals
+        self.bitangent = br_vertex.biTangents[:3] if br_vertex.biTangents else None
+        self.tangent = br_vertex.tangents[:3] if br_vertex.tangents else None
+
+        self.color = tuple(map(lambda x: int(x), br_vertex.color)) if br_vertex.color else None
+        self.uv = br_vertex.uv
+
+        self.bone_ids = br_vertex.boneIds
+        self.bone_weights = br_vertex.boneWeights
 
 
 class NudMaterial:

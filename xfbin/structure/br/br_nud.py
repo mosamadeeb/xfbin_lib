@@ -33,15 +33,14 @@ class BrNud(BrStruct):
 
         self.boundingSphere = br.read_float(4)
 
-        self.meshGroups: Tuple[BrMeshGroup] = br.read_struct(BrMeshGroup, self.meshGroupCount, self)
+        self.meshGroups: Tuple[BrNudMeshGroup] = br.read_struct(BrNudMeshGroup, self.meshGroupCount, self)
 
         for g in self.meshGroups:
-            g.meshes = br.read_struct(BrMesh, g.meshCount, self)
+            g.meshes = br.read_struct(BrNudMesh, g.meshCount, self)
 
 
-class BrMeshGroup(BrStruct):
-    SIZE = 0x30
-    meshes: List['BrMesh']
+class BrNudMeshGroup(BrStruct):
+    meshes: List['BrNudMesh']
 
     def __br_read__(self, br: BinaryReader, nud: BrNud) -> None:
         self.boundingSphere = br.read_float(8)
@@ -58,9 +57,7 @@ class BrMeshGroup(BrStruct):
         self.positionb = br.read_uint32()
 
 
-class BrMesh(BrStruct):
-    SIZE = 0x30
-
+class BrNudMesh(BrStruct):
     def __br_read__(self, br: BinaryReader, nud: BrNud) -> None:
         self.polyClumpStart = br.read_uint32() + nud.polyClumpStart
         self.vertClumpStart = br.read_uint32() + nud.vertClumpStart
@@ -106,7 +103,7 @@ class BrMesh(BrStruct):
 
                 br.seek(self.vertAddClumpStart)
 
-            self.vertices = br.read_struct(BrVertex, self.vertexCount, vertexType, boneType, self.uvSize)
+            self.vertices = br.read_struct(BrNudVertex, self.vertexCount, vertexType, boneType, self.uvSize)
 
             if boneType > 0:
                 for i in range(self.vertexCount):
@@ -115,14 +112,14 @@ class BrMesh(BrStruct):
 
         # Materials
         i = 0
-        self.materials: List[BrMaterial] = list()
+        self.materials: List[BrNudMaterial] = list()
         while i < 4 and self.texProps[i] != 0:
             with br.seek_to(self.texProps[i]):
-                self.materials.append(br.read_struct(BrMaterial, 1, self, nud.nameStart))
+                self.materials.append(br.read_struct(BrNudMaterial, 1, self, nud.nameStart))
             i += 1
 
 
-class VertexType(IntEnum):
+class NudVertexType(IntEnum):
     NoNormals = 0
     NormalsFloat = 1
     Unknown = 2
@@ -131,42 +128,48 @@ class VertexType(IntEnum):
     NormalsTanBiTanHalfFloat = 7
 
 
-class BoneType(IntEnum):
+class NudBoneType(IntEnum):
     NoBones = 0
     Float = 0x10
     HalfFloat = 0x20
     Byte = 0x40
 
 
-class BrVertex(BrStruct):
-    color: Optional[Union[List[int], List[float]]]
-    uv: List[Tuple[float, float]]
-
+class BrNudVertex(BrStruct):
     def __br_read__(self, br: BinaryReader, vertexType, boneType, uvSize) -> None:
         self.position = br.read_float(3)
+        self.normals = None
+        self.biTangents = None
+        self.tangents = None
 
-        if vertexType == VertexType.NoNormals:
+        self.color = None
+        self.uv = None
+
+        self.boneIds = None
+        self.boneWeights = None
+
+        if vertexType == NudVertexType.NoNormals:
             br.read_float()
-        elif vertexType == VertexType.NormalsFloat:
+        elif vertexType == NudVertexType.NormalsFloat:
             br.read_float()
             self.normals = br.read_float(3)
             br.read_float()
-        elif vertexType == VertexType.Unknown:
+        elif vertexType == NudVertexType.Unknown:
             self.normals = br.read_float(3)
             br.read_float()
             br.read_float(3)
             br.read_float(3)
             br.read_float(3)
-        elif vertexType == VertexType.NormalsTanBiTanFloat:
+        elif vertexType == NudVertexType.NormalsTanBiTanFloat:
             br.read_float()
             self.normals = br.read_float(3)
             br.read_float()
             self.biTangents = br.read_float(4)
             self.tangents = br.read_float(4)
-        elif vertexType == VertexType.NormalsHalfFloat:
+        elif vertexType == NudVertexType.NormalsHalfFloat:
             self.normals = br.read_half_float(3)
             br.read_half_float()
-        elif vertexType == VertexType.NormalsTanBiTanHalfFloat:
+        elif vertexType == NudVertexType.NormalsTanBiTanHalfFloat:
             self.normals = br.read_half_float(3)
             br.read_half_float()
             self.biTangents = br.read_half_float(4)
@@ -174,28 +177,28 @@ class BrVertex(BrStruct):
         else:
             raise Exception(f'Unsupported vertex type: {vertexType}')
 
-        if boneType == BoneType.NoBones:
+        if boneType == NudBoneType.NoBones:
             if uvSize >= 18:
                 self.color = br.read_uint8(4)
 
             self.uv = list()
             for _ in range(uvSize >> 4):
                 self.uv.append(br.read_half_float(2))
-        elif boneType == BoneType.Float:
+        elif boneType == NudBoneType.Float:
             self.boneIds = br.read_uint32(4)
             self.boneWeights = br.read_float(4)
-        elif boneType == BoneType.HalfFloat:
+        elif boneType == NudBoneType.HalfFloat:
             self.boneIds = br.read_uint16(4)
             self.boneWeights = br.read_half_float(4)
-        elif boneType == BoneType.Byte:
+        elif boneType == NudBoneType.Byte:
             self.boneIds = br.read_uint8(4)
             self.boneWeights = list(map(lambda x: float(x) / 255, br.read_uint8(4)))
         else:
             raise Exception(f'Unsupported bone type: {boneType}')
 
 
-class BrMaterial(BrStruct):
-    def __br_read__(self, br: BinaryReader, mesh: BrMesh, nameStart: int) -> None:
+class BrNudMaterial(BrStruct):
+    def __br_read__(self, br: BinaryReader, mesh: BrNudMesh, nameStart: int) -> None:
         self.flags = br.read_uint32()
         br.read_uint32()
 
