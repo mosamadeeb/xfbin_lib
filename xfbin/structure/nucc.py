@@ -89,6 +89,49 @@ class NuccChunkClump(NuccChunk):
         super().init_data(br)
         self.extension = '.clump'
 
+        # 0 or 1 (?)
+        self.field00 = br.read_uint32()
+
+        self.coordCount = br.read_uint16()
+        self.coordFlag0 = br.read_uint8()
+        self.coordFlag1 = br.read_uint8()
+
+        # Signed because root node's parent index is -1
+        self.coordNodeParentsIndices = br.read_int16(self.coordCount)
+        self.coordNodeIndices = br.read_uint32(self.coordCount)
+
+        self.modelCount = br.read_uint16()
+        self.modelFlag0 = br.read_uint8()
+        self.modelFlag1 = br.read_uint8()
+
+        # Padding (?)
+        br.read_uint32()
+
+        self.modelIndices = br.read_uint32(self.modelCount)
+
+        self.modelGroups = list()
+        while True:
+            modelGroup: BrClumpModelGroup = br.read_struct(BrClumpModelGroup)
+
+            if modelGroup.modelCount == -1:
+                break
+
+            self.modelGroups.append(modelGroup)
+
+
+class BrClumpModelGroup(BrStruct):
+    def __br_read__(self, br: 'BinaryReader') -> None:
+        self.modelCount = br.read_int16()
+
+        if self.modelCount != -1:
+            self.flag0 = br.read_uint8()
+            self.flag1 = br.read_uint8()
+
+            # Seems to be some signed 8 bit integers
+            self.unk = br.read_int8(4)
+
+            self.modelIndices = br.read_uint32(self.modelCount)
+
 
 class NuccChunkModel(NuccChunk):
     def init_data(self, br: BinaryReader):
@@ -140,6 +183,12 @@ class NuccChunkCoord(NuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
         self.extension = '.coord'
+
+        self.position = br.read_float(3)
+        self.rotation = br.read_float(3)  # Rotation is in euler
+        self.scale = br.read_float(3)
+        self.unkFloat = br.read_float()   # Might be part of scale
+        self.unkShort = br.read_uint16()  # Not always 0
 
 
 class NuccChunkBillboard(NuccChunk):
