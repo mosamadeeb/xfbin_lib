@@ -7,7 +7,6 @@ from .nucc import NuccChunk, NuccChunkNull, NuccChunkPage
 class Page:
     def __init__(self):
         self.chunks: List[NuccChunk] = list()
-        self.references: List[NuccChunk] = list()
 
     def __iter__(self):
         return iter(self.chunks)
@@ -28,7 +27,7 @@ class Xfbin:
 
     def get_type_chunk_dict(self) -> Dict[Union[str, type], List[NuccChunk]]:
         chunks = list(chain.from_iterable(self.pages))
-        result = dict()
+        result: Dict[type, List[NuccChunk]] = dict()
 
         for c in chunks:
             if type(c) is NuccChunkPage or type(c) is NuccChunkNull:

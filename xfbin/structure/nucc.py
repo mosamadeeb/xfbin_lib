@@ -1,32 +1,36 @@
-from typing import List
+from typing import List, Optional
+
 from ..util import *
 from .br import *
+from .br.br_nucc import *
+from .nud import Nud
 
 
 class NuccChunk:
-    name: str
     filePath: str
+    name: str
     data: bytearray
 
     extension: str
 
-    def __init__(self):
+    def __init__(self, file_path, name):
         self.extension = ''
+        self.filePath = file_path
+        self.name = name
 
-    def init_data(self, br: BinaryReader):
-        self.data = br.buffer()
-        br.seek(0)
-
-    def finalize_data(self, br_xfbin: BrXfbin, page: 'Page', page_index: int):
-        pass
+    def init_data(self, br_chunk: BrNuccChunk, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        """Initializes the data of this `NuccChunk` from a `BrNuccChunk`, using a chunk list and a list of
+        local page indices for properly setting references to other `NuccChunk`s
+        """
+        self.data = br_chunk.data
 
     @classmethod
     def get_nucc_type_from_str(cls, s: str) -> type:
         return globals().get(s[0].upper() + s[1:], cls)
 
     @classmethod
-    def create_from_nucc_type(cls, s: str) -> 'NuccChunk':
-        return cls.get_nucc_type_from_str(s)()
+    def create_from_nucc_type(cls, type_str, file_path, name) -> 'NuccChunk':
+        return cls.get_nucc_type_from_str(type_str)(file_path, name)
 
     @classmethod
     def get_all_nucc_types(cls):
@@ -40,10 +44,8 @@ class NuccChunkNull(NuccChunk):
 
 
 class NuccChunkPage(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-        self.pageSize = br.read_uint32()
-        self.referenceCount = br.read_uint32()
+    # Should not be used as a NuccChunk
+    pass
 
 
 class NuccChunkIndex(NuccChunk):
@@ -52,170 +54,143 @@ class NuccChunkIndex(NuccChunk):
 
 
 class NuccChunkTexture(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkTexture, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.nut'
 
-        self.field00 = br.read_uint16()
-        self.width = br.read_uint16()
-        self.height = br.read_uint16()
-        self.field06 = br.read_uint16()
+        self.width = br_chunk.width
+        self.height = br_chunk.width
 
-        self.nutSize = br.read_uint32()
-
-        try:
-            self.nut = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nutSize], Endian.BIG).read_struct(BrNut)
-        except:
-            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
-            self.nut = None
-        finally:
-            br.seek(self.nutSize, Whence.CUR)
+        # TODO: Implement Nut
+        #self.nut = Nut(br_chunk.brNut)
 
 
 class NuccChunkDynamics(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.dynamics'
 
 
 class NuccChunkAnm(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkAnm, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.anm'
 
 
 class NuccChunkClump(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.clump'
 
-        # 0 or 1 (?)
-        self.field00 = br.read_uint32()
+        # Get the coord chunks
+        self.coord_chunks: List[NuccChunkCoord] = list()
+        for i in br_chunk.coordNodeIndices:
+            self.coord_chunks.append(chunk_list[chunk_indices[i]])
 
-        self.coordCount = br.read_uint16()
-        self.coordFlag0 = br.read_uint8()
-        self.coordFlag1 = br.read_uint8()
+        # Setup the coord node hierarchy
+        self.root_node: CoordNode = None
+        for i, j in zip(range(len(self.coord_chunks)), br_chunk.coordNodeParentsIndices):
+            if j == -1:
+                # Set the root node
+                self.root_node = self.coord_chunks[i].node
+            else:
+                # Set the node's parent and add the node to its parent's children
+                self.coord_chunks[i].node.parent = self.coord_chunks[j].node
+                self.coord_chunks[j].node.children.append(self.coord_chunks[i].node)
 
-        # Signed because root node's parent index is -1
-        self.coordNodeParentsIndices = br.read_int16(self.coordCount)
-        self.coordNodeIndices = br.read_uint32(self.coordCount)
+        # Get the model chunks
+        self.model_chunks: List[NuccChunkModel] = list()
+        for i in br_chunk.modelIndices:
+            self.model_chunks.append(chunk_list[chunk_indices[i]])
 
-        self.modelCount = br.read_uint16()
-        self.modelFlag0 = br.read_uint8()
-        self.modelFlag1 = br.read_uint8()
-
-        # Padding (?)
-        br.read_uint32()
-
-        self.modelIndices = br.read_uint32(self.modelCount)
-
-        self.modelGroups = list()
-        while True:
-            modelGroup: BrClumpModelGroup = br.read_struct(BrClumpModelGroup)
-
-            if modelGroup.modelCount == -1:
-                break
-
-            self.modelGroups.append(modelGroup)
+        # Initialize the model groups
+        self.model_groups: List[ClumpModelGroup] = list()
+        for model_group in br_chunk.modelGroups:
+            self.model_groups.append(ClumpModelGroup(model_group, chunk_list, chunk_indices))
 
 
-class BrClumpModelGroup(BrStruct):
-    def __br_read__(self, br: 'BinaryReader') -> None:
-        self.modelCount = br.read_int16()
-
-        if self.modelCount != -1:
-            self.flag0 = br.read_uint8()
-            self.flag1 = br.read_uint8()
-
-            # Seems to be some signed 8 bit integers
-            self.unk = br.read_int8(4)
-
-            self.modelIndices = br.read_uint32(self.modelCount)
-
-
-class NuccChunkModel(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-        self.extension = '.nud'
-
-        self.field00 = br.read_uint16()
-        self.field02 = br.read_uint16()
-
-        self.flag0 = br.read_uint8()
-        self.flag1 = br.read_uint8()
-        self.flag2 = br.read_uint8()
-        self.flag3 = br.read_uint8()
-
-        self.field08 = br.read_uint32()
-        self.field0C = br.read_uint32()
-        self.field10 = br.read_uint32()
-        self.field14 = br.read_uint32()
-
-        self.nudSize = br.read_uint32()
-
-        if self.flag1 & 0x04:
-            self.floats = br.read_float(6)
-
-        try:
-            self.nud = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nudSize], Endian.BIG).read_struct(BrNud)
-        except:
-            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
-            self.nud = None
-        finally:
-            br.seek(self.nudSize, Whence.CUR)
-
-        self.materialCount = br.read_uint16()
-        self.materialIndices = br.read_uint32(self.materialCount)
-
-    def finalize_data(self, br_xfbin: BrXfbin, page: 'Page', page_index: int):
-        self.materialChunks: List[NuccChunkMaterial] = list()
-        for i in self.materialIndices:
-            self.materialChunks.append(br_xfbin.chunkTable.chunkMapIndices[page_index + i])
-
-
-class NuccChunkMaterial(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-        self.extension = '.material'
+class ClumpModelGroup:
+    def __init__(self, model_group: BrClumpModelGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+        self.model_chunks: List[NuccChunkModel] = list(
+            map(lambda x: chunk_list[chunk_indices[x]], model_group.modelIndices))
 
 
 class NuccChunkCoord(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkCoord, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.coord'
 
-        self.position = br.read_float(3)
-        self.rotation = br.read_float(3)  # Rotation is in euler
-        self.scale = br.read_float(3)
-        self.unkFloat = br.read_float()   # Might be part of scale
-        self.unkShort = br.read_uint16()  # Not always 0
+        self.node = CoordNode(br_chunk)
+
+
+class CoordNode:
+    parent: Optional['CoordNode']
+    children: List['CoordNode']
+
+    def __init__(self, coord: BrNuccChunkCoord):
+        self.parent = None
+        self.children = list()
+
+        self.position = coord.position
+        self.rotation = coord.rotation
+        self.scale = coord.scale
+        self.unkFloat = coord.unkFloat
+        self.unkShort = coord.unkShort
+
+    def get_children_recursive(self) -> List['CoordNode']:
+        result = list()
+
+        for child in self.children:
+            result.extend(child.get_children_recursive())
+
+        return result
+
+
+class NuccChunkModel(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkModel, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.extension = '.nud'
+
+        # Create a Nud from the BrNud
+        self.nud = Nud(br_chunk.brNud)
+
+        # Get the material chunks
+        self.material_chunks: List[NuccChunkMaterial] = list()
+        for i in br_chunk.materialIndices:
+            self.material_chunks.append(chunk_list[chunk_indices[i]])
+
+
+class NuccChunkMaterial(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkMaterial, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.extension = '.material'
 
 
 class NuccChunkBillboard(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.billboard'
 
 
 class NuccChunkTrail(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkTrail, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.trail'
 
 
 class NuccChunkCamera(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkCamera, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.cam'
 
 
 class NuccChunkParticle(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkParticle, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.particle'
 
 
 class NuccChunkBinary(NuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
+    def init_data(self, br_chunk: BrNuccChunkBinary, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.bin'

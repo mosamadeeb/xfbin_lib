@@ -1,11 +1,14 @@
 from typing import List, Tuple
 
-from .br.br_nud import BrVertex
+from .br.br_nud import *
 
 
 class Nud:
     name: str  # chunk name
     mesh_groups: List['NudMeshGroup']
+
+    def __init__(self, br_nud: BrNud):
+        pass
 
 
 class NudMeshGroup:
