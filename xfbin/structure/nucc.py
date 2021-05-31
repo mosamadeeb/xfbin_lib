@@ -88,11 +88,11 @@ class NuccChunkClump(NuccChunk):
             self.coord_chunks.append(chunk_list[chunk_indices[i]])
 
         # Setup the coord node hierarchy
-        self.root_node: CoordNode = None
+        self.root_nodes: List[CoordNode] = list()
         for i, j in zip(range(len(self.coord_chunks)), br_chunk.coordNodeParentsIndices):
             if j == -1:
-                # Set the root node
-                self.root_node = self.coord_chunks[i].node
+                # There could be multiple root nodes: add all of them
+                self.root_nodes.append(self.coord_chunks[i].node)
             else:
                 # Set the node's parent and add the node to its parent's children
                 self.coord_chunks[i].node.parent = self.coord_chunks[j].node
