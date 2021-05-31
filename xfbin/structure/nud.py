@@ -91,8 +91,8 @@ class NudVertex:
     def __init__(self, br_vertex: BrNudVertex):
         self.position = br_vertex.position
         self.normal = br_vertex.normals
-        self.bitangent = br_vertex.biTangents[:3] if br_vertex.biTangents else None
-        self.tangent = br_vertex.tangents[:3] if br_vertex.tangents else None
+        self.bitangent = br_vertex.biTangents if br_vertex.biTangents else None
+        self.tangent = br_vertex.tangents if br_vertex.tangents else None
 
         self.color = tuple(map(lambda x: int(x), br_vertex.color)) if br_vertex.color else None
         self.uv = br_vertex.uv
