@@ -80,9 +80,11 @@ class BrChunkTable(BrStruct):
         br.align_pos(4)
 
         self.chunkMaps: List[BrChunkMap] = br.read_struct(BrChunkMap, self.chunkMapCount)
-        self.chunkMapIndices = br.read_uint32(self.chunkMapIndicesCount)
 
+        # Chunk references are placed between chunk maps and chunk map indices
         self.chunkMapReferences: List[BrChunkReference] = br.read_struct(BrChunkReference, self.chunkMapReferencesCount)
+
+        self.chunkMapIndices = br.read_uint32(self.chunkMapIndicesCount)
 
     def get_props_from_chunk_map(self, chunk_map: 'BrChunkMap') -> Tuple[str, str, str]:
         # Return a tuple of (type, path, name) using the chunk map
