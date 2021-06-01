@@ -128,7 +128,14 @@ class BrClumpModelGroup(BrStruct):
             # Seems to be some signed 8 bit integers
             self.unk = br.read_int8(4)
 
-            self.modelIndices = br.read_uint32(self.modelCount)
+            self.modelIndices = list()
+            for _ in range(self.modelCount):
+                index = br.read_int32()
+
+                # There might be -1 indices, but we're not sure what they're used for
+                # Can be found in Storm 1 spc xfbins
+                if index != -1:
+                    self.modelIndices.append(index)
 
 
 class BrNuccChunkModel(BrNuccChunk):
