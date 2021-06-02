@@ -17,7 +17,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
     else:
         file_bytes = file
 
-    with BinaryReader(file_bytes, Endian.BIG) as br:
+    with BinaryReader(file_bytes, Endian.BIG, 'cp932') as br:
         br_xfbin: BrXfbin = br.read_struct(BrXfbin)
 
     # Create NuccChunks with the correct type from the chunk map
