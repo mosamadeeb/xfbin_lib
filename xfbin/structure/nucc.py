@@ -1,8 +1,9 @@
 from typing import List, Optional
 
 from ..util import *
-from .br import *
 from .br.br_nucc import *
+from .br.br_nud import *
+from .br.br_nut import *
 from .nud import Nud
 
 
@@ -37,6 +38,10 @@ class NuccChunk:
         return result
 
     @classmethod
+    def get_nucc_str_from_type(cls, nucc_type: type) -> str:
+        return nucc_type.__name__[0].lower() + nucc_type.__name__[1:]
+
+    @classmethod
     def create_from_nucc_type(cls, type_str, file_path, name) -> 'NuccChunk':
         return cls.get_nucc_type_from_str(type_str)(file_path, name)
 
@@ -45,20 +50,32 @@ class NuccChunk:
         # This will only return types with names that start with this class's name (but are not this class)
         return [n for (k, n) in globals() if k.startswith(cls.__qualname__) and len(k) > len(cls.__qualname__)]
 
+    def __eq__(self, o: object) -> bool:
+        # Treat NuccChunks as ChunkMaps:
+        # ChunkMaps are only equal to other ChunkMaps that have the same type, file path, and name
+        return isinstance(o, type(self)) and self.filePath == o.filePath and self.name == o.name
+
+    def __hash__(self) -> int:
+        # Just a simple hash calculation to allow NuccChunks to be put into a dictionary
+        return hash(type(self).__qualname__) ^ hash(self.filePath) ^ hash(self.name)
+
 
 class NuccChunkNull(NuccChunk):
     # Empty
-    pass
+    def __init__(self, file_path='', name=''):
+        super().__init__(file_path, name)
 
 
 class NuccChunkPage(NuccChunk):
-    # Should not be used as a NuccChunk
-    pass
+    # Should not be used as a NuccChunk, except when writing
+    def __init__(self, file_path='', name='Page0'):
+        super().__init__(file_path, name)
 
 
 class NuccChunkIndex(NuccChunk):
     # Does not exist
-    pass
+    def __init__(self, file_path='', name='index'):
+        super().__init__(file_path, name)
 
 
 class NuccChunkTexture(NuccChunk):

@@ -8,6 +8,9 @@ class BrNuccChunk(BrStruct):
     filePath: str
     data: bytearray
 
+    # Only used when writing
+    nuccChunk: 'NuccChunk'
+
     def __br_read__(self, br: 'BinaryReader', file_path, name) -> None:
         # When the BrNuccChunk is read, the init_data method of the BrNuccChunk type will be called,
         # which means that this method does not have to be overrided in each subclass
@@ -20,6 +23,10 @@ class BrNuccChunk(BrStruct):
         # Store the data to be given to the NuccChunk instance later
         self.data = br.buffer()
         br.seek(0)
+
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict) -> None:
+        # This assumes that nuccChunk has been set
+        self.pageIndex = chunkIndexDict.get_or_next(self.nuccChunk)
 
     @classmethod
     def get_br_nucc_type_from_str(cls, type_str: str) -> type:
@@ -50,6 +57,13 @@ class BrNuccChunkPage(BrNuccChunk):
         super().init_data(br)
         self.pageSize = br.read_uint32()
         self.referenceSize = br.read_uint32()
+
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        super().__br_write__(br, chunkIndexDict)
+
+        # Write the size of the dictionary, and add 1 for the index chunk after this chunk
+        br.write_uint32(len(chunkIndexDict) + 1)
+        br.write_uint32(0)  # TODO: Add support for chunk references size
 
 
 class BrNuccChunkIndex(BrNuccChunk):
