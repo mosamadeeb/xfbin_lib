@@ -139,6 +139,34 @@ class BrNuccChunkClump(BrNuccChunk):
 
             self.modelGroups.append(modelGroup)
 
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        br.write_uint32(0)
+
+        br.write_uint16(len(self.nuccChunk.coord_chunks))
+        br.write_uint8(0)  # TODO: Write actual flags
+        br.write_uint8(0)
+
+        # Enumerate the coord chunks because the parent indices are respective to the local coord indices list, not the page indices
+        coord_chunks_dict = IterativeDict()
+        coord_chunks_dict.update_or_next(self.nuccChunk.coord_chunks)
+
+        coord_chunks = tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.coord_chunks))
+
+        for coord in self.nuccChunk.coord_chunks:
+            br.write_int16(coord_chunks_dict[coord.node.parent.chunk] if coord.node.parent else -1)
+
+        br.write_uint32(coord_chunks)
+
+        br.write_uint16(len(self.nuccChunk.model_chunks))
+        br.write_uint8(0)  # TODO: Write actual flags
+        br.write_uint8(0)
+
+        br.write_uint32(0)
+        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.model_chunks)))
+
+        for group in self.nuccChunk.model_groups:
+            br.write_struct(BrClumpModelGroup(), group, chunkIndexDict)
+
 
 class BrClumpModelGroup(BrStruct):
     def __br_read__(self, br: 'BinaryReader') -> None:
@@ -159,6 +187,16 @@ class BrClumpModelGroup(BrStruct):
                 # Can be found in Storm 1 spc xfbins
                 if index != -1:
                     self.modelIndices.append(index)
+
+    def __br_write__(self, br: 'BinaryReader', model_group: 'ClumpModelGroup', chunkIndexDict: IterativeDict):
+        br.write_uint16(len(model_group.model_chunks))
+
+        br.write_uint8(0)  # TODO: Write actual flags
+        br.write_uint8(0)
+
+        br.write_uint32(0x7F_7F_FF_FF)
+
+        br.write_int32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), model_group.model_chunks)))
 
 
 class BrNuccChunkModel(BrNuccChunk):

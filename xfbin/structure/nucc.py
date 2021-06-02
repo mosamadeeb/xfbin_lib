@@ -145,14 +145,17 @@ class NuccChunkCoord(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.coord'
 
-        self.node = CoordNode(br_chunk)
+        # Pass a reference to the chunk itself for accessing it later
+        self.node = CoordNode(br_chunk, self)
 
 
 class CoordNode:
     parent: Optional['CoordNode']
     children: List['CoordNode']
 
-    def __init__(self, coord: BrNuccChunkCoord):
+    def __init__(self, coord: BrNuccChunkCoord, chunk: NuccChunkCoord):
+        self.chunk = chunk
+
         self.name = coord.name
         self.parent = None
         self.children = list()

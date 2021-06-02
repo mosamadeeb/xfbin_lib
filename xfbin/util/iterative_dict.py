@@ -1,3 +1,6 @@
+from typing import Iterable
+
+
 class IterativeDict(dict):
     __index: int
 
@@ -14,8 +17,8 @@ class IterativeDict(dict):
 
         return result
 
-    def update_or_next(self, other: 'IterativeDict'):
-        for k in other.keys():
+    def update_or_next(self, other: Iterable):
+        for k in other:
             self.get_or_next(k)
 
     def clear(self):
