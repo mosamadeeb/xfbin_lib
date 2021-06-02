@@ -111,7 +111,7 @@ class BrNuccChunkClump(BrNuccChunk):
         while True:
             modelGroup: BrClumpModelGroup = br.read_struct(BrClumpModelGroup)
 
-            if modelGroup.modelCount == -1:
+            if modelGroup.modelCount == -1 or br.eof():
                 break
 
             self.modelGroups.append(modelGroup)
@@ -150,15 +150,20 @@ class BrNuccChunkModel(BrNuccChunk):
         self.flag2 = br.read_uint8()
         self.flag3 = br.read_uint8()
 
-        self.field08 = br.read_uint32()
-        self.field0C = br.read_uint32()
-        self.field10 = br.read_uint32()
-        self.field14 = br.read_uint32()
+        # There's a variable amount of 32 bit ints in here
+        # It seemed like it was always 4, but sp00.xfbin (stage) in NUNS 1 had only 3
+        # For now, let's use the old trick of looking for the nud magic
+        nudStart = br.buffer().find(b'NDP3')
 
-        self.nudSize = br.read_uint32()
+        if nudStart == -1:
+            # This shouldn't happen
+            raise Exception(f'Couldn\'t find NDP3 magic in chunk: {self.name} of type: nuccChunkModel')
 
-        if self.flag1 & 0x04:
-            self.floats = br.read_float(6)
+        br.seek(nudStart)
+
+        # Read nudSize from inside the nud itself
+        with br.seek_to(4, Whence.CUR):
+            self.nudSize = br.read_uint32()
 
         # Update the data range so that the parser can write the nud only
         self.data = br.buffer()[br.pos(): br.pos() + self.nudSize]
