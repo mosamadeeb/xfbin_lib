@@ -24,7 +24,15 @@ class BrNuccChunk(BrStruct):
     @classmethod
     def get_br_nucc_type_from_str(cls, type_str: str) -> type:
         # Get the type from a string after capitalizing its first character and prepending "Br" to it
-        return globals().get("Br" + type_str[0].upper() + type_str[1:], cls)
+        type_name = "Br" + type_str[0].upper() + type_str[1:]
+        result = globals().get(type_name, None)
+
+        if result is None:
+            # Create a new type and add it to the globals
+            result = type(type_name, (cls,), {})
+            globals()[type_name] = result
+
+        return result
 
     @classmethod
     def create_from_nucc_type(cls, type_str, file_path, name, data) -> 'BrNuccChunk':
