@@ -25,8 +25,9 @@ class BrNuccChunk(BrStruct):
         br.seek(0)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict) -> None:
-        # This assumes that nuccChunk has been set
-        self.pageIndex = chunkIndexDict.get_or_next(self.nuccChunk)
+        # This should be used only when an override does not exist (i.e. don't call this manually)
+        br.extend(self.nuccChunk.data)
+        br.seek(len(self.nuccChunk.data), Whence.CUR)
 
     @classmethod
     def get_br_nucc_type_from_str(cls, type_str: str) -> type:
@@ -49,7 +50,8 @@ class BrNuccChunk(BrStruct):
 
 class BrNuccChunkNull(BrNuccChunk):
     # Empty
-    pass
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        pass
 
 
 class BrNuccChunkPage(BrNuccChunk):
@@ -59,8 +61,6 @@ class BrNuccChunkPage(BrNuccChunk):
         self.referenceSize = br.read_uint32()
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
-        super().__br_write__(br, chunkIndexDict)
-
         # Write the size of the dictionary, and add 1 for the index chunk after this chunk
         br.write_uint32(len(chunkIndexDict) + 1)
         br.write_uint32(0)  # TODO: Add support for chunk references size
@@ -82,17 +82,18 @@ class BrNuccChunkTexture(BrNuccChunk):
 
         self.nutSize = br.read_uint32()
 
-        # Update the data range so that the parser can write the nut only
-        self.data = br.buffer()[br.pos(): br.pos() + self.nutSize]
-
-        # Skip the nut size
-        br.seek(self.nutSize, Whence.CUR)
+        # TODO: Make a parser option for this, as it needs to be disabled when *not* parsing
+        # # Update the data range so that the parser can write the nut only
+        # self.data = br.buffer()[br.pos(): br.pos() + self.nutSize]
 
         try:
-            self.brNut = BinaryReader(self.data, Endian.BIG).read_struct(BrNut)
+            self.brNut = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nutSize], Endian.BIG).read_struct(BrNut)
         except:
             print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNut = None
+
+        # Skip the nut size
+        br.seek(self.nutSize, Whence.CUR)
 
 
 class BrNuccChunkDynamics(BrNuccChunk):
@@ -187,17 +188,18 @@ class BrNuccChunkModel(BrNuccChunk):
         with br.seek_to(4, Whence.CUR):
             self.nudSize = br.read_uint32()
 
-        # Update the data range so that the parser can write the nud only
-        self.data = br.buffer()[br.pos(): br.pos() + self.nudSize]
-
-        # Skip the nud size
-        br.seek(self.nudSize, Whence.CUR)
+        # TODO: Make a parser option for this, as it needs to be disabled when *not* parsing
+        # # Update the data range so that the parser can write the nud only
+        # self.data = br.buffer()[br.pos(): br.pos() + self.nudSize]
 
         try:
-            self.brNud = BinaryReader(self.data, Endian.BIG).read_struct(BrNud)
+            self.brNud = BinaryReader(br.buffer()[br.pos(): br.pos() + self.nudSize], Endian.BIG).read_struct(BrNud)
         except:
             print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNud = None
+
+        # Skip the nud size
+        br.seek(self.nudSize, Whence.CUR)
 
         self.materialCount = br.read_uint16()
         self.materialIndices = br.read_uint32(self.materialCount)

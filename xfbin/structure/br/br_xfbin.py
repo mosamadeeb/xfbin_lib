@@ -260,10 +260,11 @@ class BrChunk(BrStruct):
 
     def __br_write__(self, br: 'BinaryReader', br_nucc_chunk: BrNuccChunk, chunkIndexDict: IterativeDict, *args):
         with BinaryReader(endianness=Endian.BIG) as br_internal:
+            chunk_index = chunkIndexDict.get_or_next(br_nucc_chunk.nuccChunk)
             br_internal.write_struct(br_nucc_chunk, chunkIndexDict, *args)
 
             br.write_uint32(br_internal.size())
-            br.write_uint32(chunkIndexDict.get_or_next(br_nucc_chunk.nuccChunk))
+            br.write_uint32(chunk_index)
 
             # This doesn't affect anything
             br.write_uint16(0x79)  # nuccId
