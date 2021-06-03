@@ -1,3 +1,4 @@
+from enum import IntFlag
 from typing import List, Optional
 
 from ..util import *
@@ -180,6 +181,9 @@ class NuccChunkModel(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.nud'
 
+        # Store the rigging flag to use when writing, if the rigging flag was not specified while exporting
+        self.rigging_flag = RiggingFlag(br_chunk.riggingFlag)
+
         # Create a Nud from the BrNud
         self.nud = Nud(self.name, br_chunk.brNud)
 
@@ -187,6 +191,19 @@ class NuccChunkModel(NuccChunk):
         self.material_chunks: List[NuccChunkMaterial] = list()
         for i in br_chunk.materialIndices:
             self.material_chunks.append(chunk_list[chunk_indices[i]])
+
+
+class RiggingFlag(IntFlag):
+    NULL = 0x0
+
+    EYES = 0x01  # Storm eyes (flat)
+    EYES_3D = 0x02  # JoJo eyes
+    TEETH = 0x05
+    BODY = 0x06  # Body and tongue
+
+    # Storm 4 and JoJo use these two combined for most models (in addition to the previous flags)
+    BLUR = 0x10
+    SHADOW = 0x20
 
 
 class NuccChunkMaterial(NuccChunk):

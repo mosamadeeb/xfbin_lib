@@ -204,7 +204,7 @@ class BrNuccChunkModel(BrNuccChunk):
         super().init_data(br)
 
         self.field00 = br.read_uint16()
-        self.field02 = br.read_uint16()
+        self.riggingFlag = br.read_uint16()  # Affects if the model is correctly rigged to its bones or not
 
         self.flag0 = br.read_uint8()
         self.flag1 = br.read_uint8()
@@ -241,6 +241,42 @@ class BrNuccChunkModel(BrNuccChunk):
 
         self.materialCount = br.read_uint16()
         self.materialIndices = br.read_uint32(self.materialCount)
+
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        br.read_uint16(1)  # Can be 0 sometimes, should test more
+
+        br.write_uint8(0)  # Padding for flag in next byte
+        br.write_uint8(int(self.nuccChunk.rigging_flag))
+
+        # Some default values for the flags which we don't know the effect of
+        br.write_uint8(0)
+        br.write_uint8(0)
+        br.write_uint8(8)
+        br.write_uint8(3)
+
+        br.write_uint32(0)
+        br.write_uint32(2)
+        br.write_uint32(0)
+
+        # Number of used bones. Apparently can be set to 0 with no problems, but should not be higher than the actual bone count
+        br.write_uint32(0)
+
+        # Write the BrNud using the NuccChunk's NUD
+        with BinaryReader(endianness=Endian.BIG) as br_internal:
+            br_internal.write_struct(BrNud, self.nuccChunk.nud)
+
+            # Write NUD size
+            br.write_uint32(br_internal.size())
+
+            # Write NUD buffer
+            br.extend(br_internal.buffer())
+            br.seek(br_internal.size(), Whence.CUR)
+
+        # Write material chunk count
+        br.write_uint16(len(self.nuccChunk.material_chunks))
+
+        # Write the material chunk indices
+        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.material_chunks)))
 
 
 class BrNuccChunkMaterial(BrNuccChunk):
