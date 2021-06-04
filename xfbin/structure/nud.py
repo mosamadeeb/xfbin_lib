@@ -49,11 +49,13 @@ class NudMesh:
             self.vertices.append(NudVertex(br_vertex))
 
     def add_faces(self, faces: List[int], faceSize: int):
+        faces = iter(faces)
+
         if faceSize & 0x40:
-            self.faces = faces
+            # 0x40 format does not have -1 indices nor changing directions
+            self.faces = zip(faces, faces, faces)
             return
 
-        faces = iter(faces)
         self.faces = list()
 
         start_dir = 1
