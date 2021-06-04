@@ -243,7 +243,7 @@ class BrNuccChunkModel(BrNuccChunk):
         self.materialIndices = br.read_uint32(self.materialCount)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
-        br.read_uint16(1)  # Can be 0 sometimes, should test more
+        br.write_uint16(1)  # Can be 0 sometimes, should test more
 
         br.write_uint8(0)  # Padding for flag in next byte
         br.write_uint8(int(self.nuccChunk.rigging_flag))
@@ -258,12 +258,13 @@ class BrNuccChunkModel(BrNuccChunk):
         br.write_uint32(2)
         br.write_uint32(0)
 
-        # Number of used bones. Apparently can be set to 0 with no problems, but should not be higher than the actual bone count
+        # Index of the mesh bone of this model in the clump
+        # This might be shared by multiple models
         br.write_uint32(0)
 
         # Write the BrNud using the NuccChunk's NUD
         with BinaryReader(endianness=Endian.BIG) as br_internal:
-            br_internal.write_struct(BrNud, self.nuccChunk.nud)
+            br_internal.write_struct(BrNud(), self.nuccChunk.nud)
 
             # Write NUD size
             br.write_uint32(br_internal.size())

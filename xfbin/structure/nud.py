@@ -37,6 +37,12 @@ class NudMesh:
         self.add_faces(br_mesh.faces, br_mesh.faceSize)
         self.add_materials(br_mesh.materials)
 
+    def has_bones(self):
+        return bool(self.vertices and self.vertices[0].bone_ids)
+
+    def get_uv_channel_count(self):
+        return len(self.vertices[0].uv) if bool(self.vertices and self.vertices[0].uv) else 0
+
     def add_vertices(self, vertices: List[BrNudVertex]):
         self.vertices = list()
         for br_vertex in vertices:
@@ -128,7 +134,7 @@ class NudMaterial:
             self.textures.append(NudMaterialTexture(texture))
 
         self.properties = list()
-        for property in material.properties:
+        for property in [p for p in material.properties if p.name]:
             self.properties.append(NudMaterialProperty(property))
 
 
