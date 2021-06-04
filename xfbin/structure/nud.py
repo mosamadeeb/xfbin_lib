@@ -34,7 +34,7 @@ class NudMesh:
 
     def __init__(self, br_mesh: BrNudMesh):
         self.add_vertices(br_mesh.vertices)
-        self.add_faces(br_mesh.faces)
+        self.add_faces(br_mesh.faces, br_mesh.faceSize)
         self.add_materials(br_mesh.materials)
 
     def add_vertices(self, vertices: List[BrNudVertex]):
@@ -42,7 +42,11 @@ class NudMesh:
         for br_vertex in vertices:
             self.vertices.append(NudVertex(br_vertex))
 
-    def add_faces(self, faces: List[int]):
+    def add_faces(self, faces: List[int], faceSize: int):
+        if faceSize & 0x40:
+            self.faces = faces
+            return
+
         faces = iter(faces)
         self.faces = list()
 
@@ -75,6 +79,9 @@ class NudMesh:
     def add_materials(self, materials: List[BrNudMaterial]):
         self.materials = list()
 
+        for material in materials:
+            self.materials.append(NudMaterial(material))
+
 
 class NudVertex:
     position: Tuple[float, float, float]
@@ -102,4 +109,31 @@ class NudVertex:
 
 
 class NudMaterial:
-    pass
+    def __init__(self, material: BrNudMaterial):
+        self.flags = material.flags
+
+        self.sourceFactor = material.sourceFactor
+        self.destFactor = material.destFactor
+
+        self.alphaTest = material.alphaTest
+        self.alphaFunction = material.alphaFunction
+
+        self.refAlpha = material.refAlpha
+        self.cullMode = material.cullMode
+
+        self.zBufferOffset = material.zBufferOffset
+
+        self.textures = list()
+        for texture in material.textures:
+            self.textures.append(NudMaterialTexture(texture))
+
+
+class NudMaterialTexture:
+    def __init__(self, texture: BrNudMaterialTexture):
+        self.mapMode = texture.mapMode
+
+        self.wrapModeS = texture.wrapModeS
+        self.wrapModeT = texture.wrapModeT
+        self.minFilter = texture.minFilter
+        self.magFilter = texture.magFilter
+        self.mipDetail = texture.mipDetail
