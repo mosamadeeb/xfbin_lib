@@ -211,6 +211,22 @@ class NuccChunkMaterial(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.material'
 
+        self.format = br_chunk.format
+        self.floats = br_chunk.floats
+
+        self.texture_groups = list()
+        for group in br_chunk.textureGroups:
+            self.texture_groups.append(MaterialTextureGroup(group, chunk_list, chunk_indices))
+
+
+class MaterialTextureGroup:
+    def __init__(self, texture_group: BrMaterialTextureGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+        self.unk = texture_group.unk
+
+        self.texture_chunks: List[NuccChunkTexture] = list()
+        for index in texture_group.textureIndices:
+            self.texture_chunks.append(chunk_list[chunk_indices[index]])
+
 
 class NuccChunkBillboard(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):

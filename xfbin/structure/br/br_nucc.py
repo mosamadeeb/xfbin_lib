@@ -284,6 +284,73 @@ class BrNuccChunkMaterial(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
 
+        self.groupCount = br.read_uint16()
+
+        self.unk = br.read_uint8()  # 0xFE in Storm 1, 0xCD in JoJo and Storm 4. Should actually find out what it does
+        br.read_uint8()  # 0
+
+        self.unkFloat = br.read_float()
+
+        br.read_uint8(3)
+        self.format = br.read_uint8()
+
+        float_count = 0
+        if self.format & 0x40:
+            float_count += 1
+        if self.format & 0x20:
+            float_count += 1
+        if self.format & 0x10:
+            float_count += 2
+        if self.format & 0x04:
+            float_count += 4
+        if self.format & 0x02:
+            float_count += 4
+        if self.format & 0x01:
+            float_count += 4
+
+        self.floats = br.read_float(float_count)
+
+        self.textureGroups = br.read_struct(BrMaterialTextureGroup, self.groupCount)
+
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        br.write_uint16(len(self.nuccChunk.texture_groups))
+
+        br.write_uint8(0xCD)
+        br.write_uint8(0)
+
+        br.write_float(0)  # Usually 0, but can be 0.12 and other numbers
+
+        # Padding
+        br.write_uint8([0] * 3)
+
+        # Float format
+        br.write_uint8(self.nuccChunk.format if self.nuccChunk.floats else 0)
+        br.write_float(self.nuccChunk.floats)
+
+        for group in self.nuccChunk.texture_groups:
+            br.write_struct(BrMaterialTextureGroup(), group, chunkIndexDict)
+
+
+class BrMaterialTextureGroup(BrStruct):
+    def __br_read__(self, br: 'BinaryReader'):
+        self.textureCount = br.read_int16()
+        br.read_uint16()
+
+        # Probably a flag
+        self.unk = br.read_uint32()
+
+        self.textureIndices = br.read_uint32(self.textureCount)
+
+    def __br_write__(self, br: 'BinaryReader', texture_group: 'MaterialTextureGroup', chunkIndexDict: IterativeDict):
+        br.write_uint16(len(texture_group.texture_chunks))
+        br.write_uint16(0)
+
+        # Can be safely set to 0
+        br.write_uint32(0)
+
+        # Write the texture chunk indices
+        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), texture_group.texture_chunks)))
+
 
 class BrNuccChunkCoord(BrNuccChunk):
     def init_data(self, br: BinaryReader):
