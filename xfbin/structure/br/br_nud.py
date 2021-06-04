@@ -115,7 +115,7 @@ class BrNudMesh(BrStruct):
         self.materials: List[BrNudMaterial] = list()
         while i < 4 and self.texProps[i] != 0:
             with br.seek_to(self.texProps[i]):
-                self.materials.append(br.read_struct(BrNudMaterial, 1, self, nud.nameStart))
+                self.materials.append(br.read_struct(BrNudMaterial, None, self, nud.nameStart))
             i += 1
 
 
@@ -214,32 +214,27 @@ class BrNudMaterial(BrStruct):
         br.read_uint32(2)
         self.zBufferOffset = br.read_uint32()
 
-        self.textures = br.read_struct(BrMaterialTexture, self.textureCount)
+        # Read texture proprties
+        self.textures = br.read_struct(BrNudMaterialTexture, self.textureCount)
 
+        # Read material properties
+        self.properties: List[BrNudMaterialProperty] = list()
         while True:
             matAttPos = br.pos()
 
-            self.matAttSize = br.read_uint32()
-            self.nameStart = br.read_uint32()
+            self.properties.append(br.read_struct(BrNudMaterialProperty, None, nameStart))
 
-            br.read_uint8(3)
-            self.valueCount = br.read_uint8()
-            br.read_uint32()
-
-            if self.valueCount != 0:
-                with br.seek_to(nameStart + self.nameStart):
-                    self.name = br.read_str()
-
-                self.values = list(br.read_float(self.valueCount))
-                self.values.extend([float()] * (4 - self.valueCount))
-
-            if self.matAttSize == 0:
+            if self.properties[-1].matAttSize == 0:
                 break
 
-            br.seek(matAttPos + self.matAttSize)
+            br.seek(matAttPos + self.properties[-1].matAttSize)
 
 
-class BrMaterialTexture(BrStruct):
+
+
+
+
+class BrNudMaterialTexture(BrStruct):
     def __br_read__(self, br: BinaryReader) -> None:
         self.hash = br.read_uint32()
         br.read_uint32()
@@ -256,3 +251,21 @@ class BrMaterialTexture(BrStruct):
 
         br.read_uint32()
         self.unk2 = br.read_int16()
+
+
+class BrNudMaterialProperty(BrStruct):
+    def __br_read__(self, br: BinaryReader, nameStart) -> None:
+        self.matAttSize = br.read_uint32()
+        self.nameStart = br.read_uint32()
+
+        br.read_uint8(3)
+        self.valueCount = br.read_uint8()
+        br.read_uint32()
+
+        if self.valueCount != 0:
+            with br.seek_to(nameStart + self.nameStart):
+                self.name = br.read_str()
+
+            self.values = list(br.read_float(self.valueCount))
+            self.values.extend([float()] * (4 - self.valueCount))
+

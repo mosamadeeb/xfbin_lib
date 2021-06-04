@@ -127,6 +127,10 @@ class NudMaterial:
         for texture in material.textures:
             self.textures.append(NudMaterialTexture(texture))
 
+        self.properties = list()
+        for property in material.properties:
+            self.properties.append(NudMaterialProperty(property))
+
 
 class NudMaterialTexture:
     def __init__(self, texture: BrNudMaterialTexture):
@@ -137,3 +141,9 @@ class NudMaterialTexture:
         self.minFilter = texture.minFilter
         self.magFilter = texture.magFilter
         self.mipDetail = texture.mipDetail
+
+
+class NudMaterialProperty:
+    def __init__(self, property: BrNudMaterialProperty):
+        self.name = property.name
+        self.values: List[float] = property.values
