@@ -100,6 +100,43 @@ class BrNuccChunkDynamics(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
 
+        self.section1Count = br.read_uint16()
+        self.section2Count = br.read_uint16()
+
+        # Chunk index of the clump of this model, but relative to this page
+        self.clumpChunkIndex = br.read_uint32()
+
+        self.section1 = br.read_struct(BrDynamics1, self.section1Count)
+        self.section2 = br.read_struct(BrDynamics2, self.section2Count)
+
+        # Read all shorts as a single tuple for now
+        self.section1Shorts = br.read_uint16(sum(map(lambda x: x.unkCount, self.section1)))
+
+
+# Placeholder names for now
+class BrDynamics1(BrStruct):
+    def __br_read__(self, br: 'BinaryReader'):
+        self.floats = br.read_float(4)
+
+        # Coord index in the clump's coord indices
+        self.coordIndex = br.read_uint16()
+        self.unkCount = br.read_uint16()
+
+
+class BrDynamics2(BrStruct):
+    def __br_read__(self, br: 'BinaryReader'):
+        self.floats = br.read_float(6)
+
+        self.coordIndex = br.read_uint16()
+        self.unkCount = br.read_uint16()
+
+        self.negativeUnk = br.read_int16()
+        br.read_uint16()
+
+        self.unkShortTuples = list()
+        for _ in range(self.unkCount):
+            self.unkShortTuples.append(br.read_uint16(2))
+
 
 class BrNuccChunkAnm(BrNuccChunk):
     def init_data(self, br: BinaryReader):
