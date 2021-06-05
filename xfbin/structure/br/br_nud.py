@@ -246,8 +246,10 @@ class BrNudMesh(BrStruct):
             br.write_uint32(tex_prop)
 
         # Write face count and format
-        br.write_uint16(len(mesh.faces) * 3)
-        br.write_uint8(0x40)  # 0x04 is for faces that switch direction, 0x40 is for normal indices
+        br.write_uint16((len(mesh.faces) * 4) - 1)
+
+        # Unlike the usual 0x04 and 0x40 formats, CC2 NUDs only support strips (0x04) but this flag is always 0
+        br.write_uint8(0)
         br.write_uint8(0x04)
 
         # Padding
@@ -255,9 +257,13 @@ class BrNudMesh(BrStruct):
 
         # Write faces
         # TODO: Add a limiter in the exporter.
-        # The maximum vertex index should be 32,767 and the maximum face count should be 21,845.
-        for face in mesh.faces:
-            buffers.polyClump.write_int16(face)
+        # The maximum vertex index should be 32,767 and the maximum face count should be 16,383.
+        for face in mesh.faces[:-1]:
+            buffers.polyClump.write_int16((face[2], face[0], face[1]))
+            buffers.polyClump.write_int16(-1)
+
+        # Write the last triangle (without the -1)
+        buffers.polyClump.write_int16((mesh.faces[-1][2], mesh.faces[-1][0], mesh.faces[-1][1]))
 
         # Write UV + vertices
         vertex_br = buffers.vertClump
