@@ -407,12 +407,15 @@ class BrNudMaterial(BrStruct):
         self.properties: List[BrNudMaterialProperty] = list()
         while True:
             matAttPos = br.pos()
-            self.properties.append(br.read_struct(BrNudMaterialProperty, None, nameStart))
+            prop = br.read_struct(BrNudMaterialProperty, None, nameStart)
 
-            if self.properties[-1].matAttSize == 0:
+            if not (prop.valueCount == prop.nameStart == 0):
+                self.properties.append(prop)
+
+            if prop.matAttSize == 0:
                 break
 
-            br.seek(matAttPos + self.properties[-1].matAttSize)
+            br.seek(matAttPos + prop.matAttSize)
 
     def __br_write__(self, br: 'BinaryReader', material: 'NudMaterial', buffers: NudBuffers):
         br.write_uint32(material.flags)
@@ -488,13 +491,11 @@ class BrNudMaterialProperty(BrStruct):
         self.valueCount = br.read_uint8()
         br.read_uint32()
 
-        self.name = ''
+        with br.seek_to(nameStart + self.nameStart):
+            self.name = br.read_str()
+
         self.values = list()
-
         if self.valueCount != 0:
-            with br.seek_to(nameStart + self.nameStart):
-                self.name = br.read_str()
-
             self.values = list(br.read_float(self.valueCount))
             self.values.extend([float()] * (4 - self.valueCount))
 
