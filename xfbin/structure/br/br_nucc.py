@@ -248,8 +248,11 @@ class BrNuccChunkModel(BrNuccChunk):
         self.flag2 = br.read_uint8()
         self.flag3 = br.read_uint8()
 
+        br.read_uint32()  # 0
+        self.clumpIndex = br.read_uint32()
+
         # There's a variable amount of 32 bit ints in here
-        # It seemed like it was always 4, but sp00.xfbin (stage) in NUNS 1 had only 3
+        # It seemed like it was always 2, but sp00.xfbin (stage) in NUNS 1 had only 1
         # For now, let's use the old trick of looking for the nud magic
         nudStart = br.buffer().find(b'NDP3')
 
@@ -292,7 +295,7 @@ class BrNuccChunkModel(BrNuccChunk):
         br.write_uint8(3)
 
         br.write_uint32(0)
-        br.write_uint32(2)
+        br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.clump_chunk))
         br.write_uint32(0)
 
         # Index of the mesh bone of this model in the clump

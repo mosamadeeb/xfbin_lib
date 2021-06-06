@@ -184,6 +184,9 @@ class NuccChunkModel(NuccChunk):
         # Store the rigging flag to use when writing, if the rigging flag was not specified while exporting
         self.rigging_flag = RiggingFlag(br_chunk.riggingFlag)
 
+        # Reference to the clump chunk of this page
+        self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
+
         # Create a Nud from the BrNud
         self.nud = Nud(self.name, br_chunk.brNud)
 
