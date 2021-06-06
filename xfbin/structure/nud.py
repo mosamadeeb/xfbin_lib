@@ -142,6 +142,7 @@ class NudMaterial:
 
 class NudMaterialTexture:
     def __init__(self, texture: BrNudMaterialTexture):
+        self.unk0 = texture.unk0
         self.mapMode = texture.mapMode
 
         self.wrapModeS = texture.wrapModeS
@@ -149,6 +150,8 @@ class NudMaterialTexture:
         self.minFilter = texture.minFilter
         self.magFilter = texture.magFilter
         self.mipDetail = texture.mipDetail
+        self.unk1 = texture.unk1
+        self.unk2 = texture.unk2
 
 
 class NudMaterialProperty:

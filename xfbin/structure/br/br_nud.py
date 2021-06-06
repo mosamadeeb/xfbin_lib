@@ -409,8 +409,8 @@ class BrNudMaterial(BrStruct):
             matAttPos = br.pos()
             prop = br.read_struct(BrNudMaterialProperty, None, nameStart)
 
-            if not (prop.valueCount == prop.nameStart == 0):
-                self.properties.append(prop)
+            #if not (prop.valueCount == prop.nameStart == 0):
+            self.properties.append(prop)
 
             if prop.matAttSize == 0:
                 break
@@ -448,7 +448,9 @@ class BrNudMaterial(BrStruct):
 
 class BrNudMaterialTexture(BrStruct):
     def __br_read__(self, br: BinaryReader) -> None:
-        self.hash = br.read_uint32()
+        # This is not the hash, because that does not exist in CC2 NUDs.
+        # Apparently, 0 makes it completely ignore the NUT texture, while -1 makes it use it
+        self.unk0 = br.read_uint32()
         br.read_uint32()
 
         br.read_uint16()
@@ -465,7 +467,7 @@ class BrNudMaterialTexture(BrStruct):
         self.unk2 = br.read_int16()
 
     def __br_write__(self, br: 'BinaryReader', texture: 'NudMaterialTexture') -> None:
-        br.write_uint32(0)  # Hash isn't used in xfbins
+        br.write_uint32(texture.unk0)
         br.write_uint32(0)
 
         br.write_uint16(0)
@@ -476,10 +478,10 @@ class BrNudMaterialTexture(BrStruct):
         br.write_uint8(texture.minFilter)
         br.write_uint8(texture.magFilter)
         br.write_uint8(texture.mipDetail)
-        br.write_uint8(0)
+        br.write_uint8(texture.unk1)
 
         br.write_uint32(0)
-        br.write_uint16(0)
+        br.write_uint16(texture.unk2)
 
 
 class BrNudMaterialProperty(BrStruct):
@@ -491,8 +493,11 @@ class BrNudMaterialProperty(BrStruct):
         self.valueCount = br.read_uint8()
         br.read_uint32()
 
-        with br.seek_to(nameStart + self.nameStart):
-            self.name = br.read_str()
+        # A material name should never be the first name, as the mesh group should have a name before it
+        self.name = ''
+        if self.nameStart != 0:
+            with br.seek_to(nameStart + self.nameStart):
+                self.name = br.read_str()
 
         self.values = list()
         if self.valueCount != 0:
