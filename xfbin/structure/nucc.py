@@ -1,5 +1,5 @@
 from enum import IntFlag
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from ..util import *
 from .br.br_nucc import *
@@ -217,9 +217,17 @@ class NuccChunkMaterial(NuccChunk):
         self.format = br_chunk.format
         self.floats = br_chunk.floats
 
-        self.texture_groups = list()
+        self.texture_groups: List[MaterialTextureGroup] = list()
         for group in br_chunk.textureGroups:
             self.texture_groups.append(MaterialTextureGroup(group, chunk_list, chunk_indices))
+
+    def __iter__(self):
+        all_textures: Set[NuccChunkTexture] = set()
+
+        for group in self.texture_groups:
+            all_textures.update(group.texture_chunks)
+
+        return iter(all_textures)
 
 
 class MaterialTextureGroup:
@@ -229,6 +237,9 @@ class MaterialTextureGroup:
         self.texture_chunks: List[NuccChunkTexture] = list()
         for index in texture_group.textureIndices:
             self.texture_chunks.append(chunk_list[chunk_indices[index]])
+
+    def __iter__(self):
+        return iter(self.texture_chunks)
 
 
 class NuccChunkBillboard(NuccChunk):

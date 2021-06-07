@@ -1,7 +1,8 @@
 from itertools import chain
 from typing import Dict, List, Union
 
-from .nucc import NuccChunk, NuccChunkNull, NuccChunkPage
+from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial, NuccChunkNull,
+                   NuccChunkPage)
 
 
 class Page:
@@ -16,6 +17,20 @@ class Page:
             nucc_type = NuccChunk.get_nucc_type_from_str(nucc_type)
 
         return [c for c in self.chunks if type(c) is nucc_type]
+
+    def clear(self):
+        """Clears the Chunks list of this Page by removing every chunk."""
+        self.chunks.clear()
+
+    def add_chunk(self, chunk: NuccChunk):
+        """Adds the given NuccChunk to this Page.\n
+        Chunks will be overwritten if they refer to the same chunk map (name, file path, and type match).\n
+        """
+
+        if chunk in self.chunks:
+            self.chunks[self.chunks.index(chunk)] = chunk
+        else:
+            self.chunks.append(chunk)
 
 
 class Xfbin:
@@ -55,3 +70,84 @@ class Xfbin:
             result.extend(p.get_chunks_by_type(nucc_type))
 
         return result
+
+    def get_pages_by_type(self, nucc_type: Union[str, type]) -> List[Page]:
+        """Returns a list of pages that contain at least one chunk of the specified type."""
+        return [p for p in self.pages if p.get_chunks_by_type(nucc_type)]
+
+    def clear(self):
+        """Clears the Pages list of this Xfbin by removing every Page."""
+        self.pages.clear()
+
+    def add_chunk_page(self, chunk: NuccChunk):
+        """Adds the given NuccChunk to a new Page and adds it to this Xfbin.\n
+        Pages will be overwritten if they have a chunk that refers to the same chunk map (name, file path, and type match).\n
+        Returns a reference to the new chunk Page.\n
+        """
+
+        result = self.update_chunk_page(chunk)
+
+        if not result:
+            self.pages.append(Page())
+            self.pages[-1].add_chunk(chunk)
+            return self.pages[-1]
+
+        return result
+
+    def update_chunk_page(self, chunk: NuccChunk):
+        """Overwrites the Page that contains a chunk map reference of the given NuccChunk with the chunk.\n
+        Pages will be overwritten if they have a chunk that refers to the same chunk map (name, file path, and type match).\n
+        Returns a reference to the updated chunk Page, or None if no Page contained a reference to the chunk.\n
+        """
+
+        chunk_page = Page()
+        chunk_page.add_chunk(chunk)
+
+        for i, page in enumerate(self.pages):
+            if chunk in page.chunks:
+                self.pages[i] = chunk_page
+                return chunk_page
+
+        return None
+
+    def add_clump_page(self, clump: NuccChunkClump) -> Page:
+        """Generates and adds a clump Page to this Xfbin using the given NuccChunkClump Chunk.\n
+        All of the chunk references will be addressed, and texture Pages will be created when available.\n
+        Pages will be overwritten if the clump Chunks refer to the same chunk map (name, file path, and type match).\n
+        Returns a reference to the new clump Page.\n
+        """
+
+        if not isinstance(clump, NuccChunkClump):
+            raise Exception(f'Cannot add clump - {clump} is not an instance of NuccChunkClump.')
+
+        clump_page = Page()
+        materials: List[NuccChunkMaterial] = list()
+        texture_pages: List[Page] = list()
+
+        # Add the model chunks
+        for model in clump.model_chunks:
+            clump_page.add_chunk(model)
+            materials.extend(model.material_chunks)
+
+        # Add the coord chunks
+        for coord in clump.coord_chunks:
+            clump_page.add_chunk(coord)
+
+        # Add the clump chunk
+        clump_page.add_chunk(clump)
+
+        # Add the material chunks
+        for material in materials:
+            clump_page.add_chunk(material)
+
+            for texture in material:
+                # Add each texture chunk to a new page or update its page if it exists
+                if not self.update_chunk_page(texture):
+                    texture_pages.append(Page())
+                    texture_pages[-1].add_chunk(texture)
+
+        # Add the new texture pages before the clump page
+        self.pages.extend(texture_pages)
+        self.pages.append(clump_page)
+
+        return clump_page
