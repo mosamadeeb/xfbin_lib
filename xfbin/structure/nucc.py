@@ -132,11 +132,15 @@ class NuccChunkClump(NuccChunk):
         # Initialize the model groups
         self.model_groups: List[ClumpModelGroup] = list()
         for model_group in br_chunk.modelGroups:
-            self.model_groups.append(ClumpModelGroup(model_group, chunk_list, chunk_indices))
+            self.model_groups.append(ClumpModelGroup())
+            self.model_groups[-1].init_data(model_group, chunk_list, chunk_indices)
 
 
 class ClumpModelGroup:
-    def __init__(self, model_group: BrClumpModelGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+    def __init__(self) -> None:
+        self.model_chunks: List[NuccChunkModel] = list()
+
+    def init_data(self, model_group: BrClumpModelGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
         self.model_chunks: List[NuccChunkModel] = list(
             map(lambda x: chunk_list[chunk_indices[x]], model_group.modelIndices))
 
@@ -147,20 +151,28 @@ class NuccChunkCoord(NuccChunk):
         self.extension = '.coord'
 
         # Pass a reference to the chunk itself for accessing it later
-        self.node = CoordNode(br_chunk, self)
+        self.node = CoordNode(self)
+        self.node.init_data(br_chunk)
 
 
 class CoordNode:
     parent: Optional['CoordNode']
     children: List['CoordNode']
 
-    def __init__(self, coord: BrNuccChunkCoord, chunk: NuccChunkCoord):
+    def __init__(self, chunk: NuccChunkCoord):
         self.chunk = chunk
 
-        self.name = coord.name
+        self.name = chunk.name
         self.parent = None
         self.children = list()
 
+        self.position = (0.0,) * 3
+        self.rotation = (0.0,) * 3
+        self.scale = (1.0) * 3
+        self.unkFloat = 1.0
+        self.unkShort = 0
+
+    def init_data(self, coord: BrNuccChunkCoord):
         self.position = coord.position
         self.rotation = coord.rotation
         self.scale = coord.scale
