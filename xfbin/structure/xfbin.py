@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial, NuccChunkNull,
                    NuccChunkPage)
@@ -79,6 +79,32 @@ class Xfbin:
         """Clears the Pages list of this Xfbin by removing every Page."""
         self.pages.clear()
 
+    def get_chunk_page(self, chunk: NuccChunk) -> Optional[Tuple[int, Page]]:
+        """Returns a tuple of the index and the Page that contains a chunk map reference of the given NuccChunk, or None if it does not exist."""
+        for i, page in enumerate(self.pages):
+            if chunk in page.chunks:
+                return (i, page)
+
+        return None
+
+    def update_chunk_page(self, chunk: NuccChunk):
+        """Overwrites the Page that contains a chunk map reference of the given NuccChunk with the chunk.\n
+        Pages will be overwritten if they have a chunk that refers to the same chunk map (name, file path, and type match).\n
+        Returns a reference to the updated chunk Page, or None if no Page contained a reference to the chunk.\n
+        """
+
+        chunk_page = Page()
+        chunk_page.add_chunk(chunk)
+
+        existing_page = self.get_chunk_page(chunk)
+
+        if existing_page:
+            index, _ = existing_page
+            self.pages[index] = chunk_page
+            return chunk_page
+
+        return None
+
     def add_chunk_page(self, chunk: NuccChunk):
         """Adds the given NuccChunk to a new Page and adds it to this Xfbin.\n
         Pages will be overwritten if they have a chunk that refers to the same chunk map (name, file path, and type match).\n
@@ -94,22 +120,6 @@ class Xfbin:
 
         return result
 
-    def update_chunk_page(self, chunk: NuccChunk):
-        """Overwrites the Page that contains a chunk map reference of the given NuccChunk with the chunk.\n
-        Pages will be overwritten if they have a chunk that refers to the same chunk map (name, file path, and type match).\n
-        Returns a reference to the updated chunk Page, or None if no Page contained a reference to the chunk.\n
-        """
-
-        chunk_page = Page()
-        chunk_page.add_chunk(chunk)
-
-        for i, page in enumerate(self.pages):
-            if chunk in page.chunks:
-                self.pages[i] = chunk_page
-                return chunk_page
-
-        return None
-
     def add_clump_page(self, clump: NuccChunkClump) -> Page:
         """Generates and adds a clump Page to this Xfbin using the given NuccChunkClump Chunk.\n
         All of the chunk references will be addressed, and texture Pages will be created when available.\n
@@ -123,6 +133,12 @@ class Xfbin:
         clump_page = Page()
         materials: List[NuccChunkMaterial] = list()
         texture_pages: List[Page] = list()
+
+        # Remove the old clump page if it exists
+        existing_page = self.get_chunk_page(clump)
+        if existing_page:
+            index, _ = existing_page
+            self.pages.pop(index)
 
         # Add the model chunks
         for model in clump.model_chunks:
