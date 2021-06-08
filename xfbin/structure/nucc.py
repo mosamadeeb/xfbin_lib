@@ -211,7 +211,7 @@ class NuccChunkModel(NuccChunk):
         # This will be set later in the clump, using the index
         self.coord_chunk: Optional[NuccChunkCoord] = None
 
-        # This should NOT be used at all after setting the coord chunk in the clump
+        # This should be set again when creating a new instance, instead of getting it from the clump when writing
         self.coord_index = br_chunk.meshBoneIndex
 
         # Create a Nud from the BrNud

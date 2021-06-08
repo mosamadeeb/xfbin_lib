@@ -313,7 +313,7 @@ class BrNuccChunkModel(BrNuccChunk):
 
         # Index of the mesh bone of this model in the clump
         # This might be shared by multiple models
-        br.write_uint32(0)
+        br.write_uint32(self.nuccChunk.coord_index)
 
         # Write the BrNud using the NuccChunk's NUD
         with BinaryReader(endianness=Endian.BIG) as br_internal:
