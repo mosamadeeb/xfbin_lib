@@ -250,6 +250,7 @@ class BrNuccChunkModel(BrNuccChunk):
 
         br.read_uint32()  # 0
         self.clumpIndex = br.read_uint32()
+        br.read_uint32()  # 0
 
         # The mesh bone index might or might not be there. So instead, we look for the start of the NUD
         # to get its size, and then check to see if the "bone index" exists or not

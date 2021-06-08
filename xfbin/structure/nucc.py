@@ -205,7 +205,7 @@ class NuccChunkModel(NuccChunk):
         self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
 
         # This will be set later in the clump, using the index
-        self.coord_chunk = None
+        self.coord_chunk: Optional[NuccChunkCoord] = None
 
         # This should NOT be used at all after setting the coord chunk in the clump
         self.coord_index = br_chunk.meshBoneIndex
