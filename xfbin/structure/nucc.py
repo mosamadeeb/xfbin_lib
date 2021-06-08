@@ -226,10 +226,12 @@ class NuccChunkModel(NuccChunk):
 class RiggingFlag(IntFlag):
     NULL = 0x0
 
-    EYES = 0x01  # Storm eyes (flat)
-    EYES_3D = 0x02  # JoJo eyes
-    TEETH = 0x05
-    BODY = 0x06  # Body and tongue
+    UNSKINNED = 0x01  # Storm eyes and JoJo teeth
+    SKINNED = 0x02  # JoJo eyes
+    BODY = 0x04
+
+    TEETH = 0x05  # Storm teeth
+    FULL = 0x06  # Body and tongue
 
     # Storm 4 and JoJo use these two combined for most models (in addition to the previous flags)
     BLUR = 0x10
