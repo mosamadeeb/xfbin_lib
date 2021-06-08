@@ -243,6 +243,9 @@ class NuccChunkMaterial(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.material'
 
+        self.field02 = br_chunk.unk
+        self.field04 = br_chunk.unkFloat
+
         self.format = br_chunk.format
         self.floats = br_chunk.floats
 
