@@ -251,20 +251,32 @@ class BrNuccChunkModel(BrNuccChunk):
         br.read_uint32()  # 0
         self.clumpIndex = br.read_uint32()
 
-        # There's a variable amount of 32 bit ints in here
-        # It seemed like it was always 2, but sp00.xfbin (stage) in NUNS 1 had only 1
-        # For now, let's use the old trick of looking for the nud magic
+        # The mesh bone index might or might not be there. So instead, we look for the start of the NUD
+        # to get its size, and then check to see if the "bone index" exists or not
         nudStart = br.buffer().find(b'NDP3')
 
         if nudStart == -1:
             # This shouldn't happen
-            raise Exception(f'Couldn\'t find NDP3 magic in chunk: {self.name} of type: nuccChunkModel')
+            raise Exception(f'Could not find NDP3 magic in chunk: {self.name} of type: {type(self).__name__}')
 
-        br.seek(nudStart)
-
-        # Read nudSize from inside the nud itself
-        with br.seek_to(4, Whence.CUR):
+        # Read nudSize from inside the NUD itself
+        with br.seek_to(nudStart + 4):
             self.nudSize = br.read_uint32()
+
+        # Check if the next int is the bone index, or if it's just the NUD size.
+        self.meshBoneIndex = br.read_uint32()
+        if self.meshBoneIndex != self.nudSize:
+            # Skip the nud size
+            br.read_uint32()
+        else:
+            # This mesh is not attached to a bone
+            self.meshBoneIndex = -1
+
+        if self.flag1 & 4:
+            self.flag1Floats = br.read_float(6)
+
+        # Seek to nudStart anyway, just in case
+        br.seek(nudStart)
 
         # TODO: Make a parser option for this, as it needs to be disabled when *not* parsing
         # # Update the data range so that the parser can write the nud only

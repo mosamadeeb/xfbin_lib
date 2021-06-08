@@ -127,7 +127,12 @@ class NuccChunkClump(NuccChunk):
         # Get the model chunks
         self.model_chunks: List[NuccChunkModel] = list()
         for i in br_chunk.modelIndices:
-            self.model_chunks.append(chunk_list[chunk_indices[i]])
+            model: NuccChunkModel = chunk_list[chunk_indices[i]]
+            self.model_chunks.append(model)
+
+            # Set the model chunk's respective coord
+            if model.coord_index != -1:
+                model.coord_chunk = self.coord_chunks[model.coord_index]
 
         # Initialize the model groups
         self.model_groups: List[ClumpModelGroup] = list()
@@ -198,6 +203,12 @@ class NuccChunkModel(NuccChunk):
 
         # Reference to the clump chunk of this page
         self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
+
+        # This will be set later in the clump, using the index
+        self.coord_chunk = None
+
+        # This should NOT be used at all after setting the coord chunk in the clump
+        self.coord_index = br_chunk.meshBoneIndex
 
         # Create a Nud from the BrNud
         self.nud = Nud(self.name, br_chunk.brNud)
