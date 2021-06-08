@@ -243,10 +243,7 @@ class BrNuccChunkModel(BrNuccChunk):
         self.field00 = br.read_uint16()
         self.riggingFlag = br.read_uint16()  # Affects if the model is correctly rigged to its bones or not
 
-        self.flag0 = br.read_uint8()
-        self.flag1 = br.read_uint8()
-        self.flag2 = br.read_uint8()
-        self.flag3 = br.read_uint8()
+        self.materialFlags = br.read_uint8(4)
 
         br.read_uint32()  # 0
         self.clumpIndex = br.read_uint32()
@@ -273,7 +270,7 @@ class BrNuccChunkModel(BrNuccChunk):
             # This mesh is not attached to a bone
             self.meshBoneIndex = -1
 
-        if self.flag1 & 4:
+        if self.materialFlags[1] & 0x04:
             self.flag1Floats = br.read_float(6)
 
         # Seek to nudStart anyway, just in case
@@ -301,11 +298,14 @@ class BrNuccChunkModel(BrNuccChunk):
         br.write_uint8(0)  # Padding for flag in next byte
         br.write_uint8(int(self.nuccChunk.rigging_flag))
 
-        # Some default values for the flags which we don't know the effect of
-        br.write_uint8(0)
-        br.write_uint8(0)
-        br.write_uint8(8)
-        br.write_uint8(3)
+        if self.nuccChunk.material_flags:
+            br.write_uint8(self.nuccChunk.material_flags)
+        else:
+            # Some default values for the flags which we don't know the effect of
+            br.write_uint8(0)
+            br.write_uint8(0)
+            br.write_uint8(8)
+            br.write_uint8(3)
 
         br.write_uint32(0)
         br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.clump_chunk))
@@ -321,6 +321,9 @@ class BrNuccChunkModel(BrNuccChunk):
 
             # Write NUD size
             br.write_uint32(br_internal.size())
+
+            # Write the flag1 floats, if they exist
+            br.write_float(self.nuccChunk.flag1_floats)
 
             # Write NUD buffer
             br.extend(br_internal.buffer())

@@ -201,6 +201,10 @@ class NuccChunkModel(NuccChunk):
         # Store the rigging flag to use when writing, if the rigging flag was not specified while exporting
         self.rigging_flag = RiggingFlag(br_chunk.riggingFlag)
 
+        # Get the transparency/shading flags
+        self.material_flags: List[int] = br_chunk.materialFlags
+        self.flag1_floats = br_chunk.flag1Floats if self.material_flags[1] & 0x04 else tuple()
+
         # Reference to the clump chunk of this page
         self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
 
