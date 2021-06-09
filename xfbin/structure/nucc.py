@@ -215,7 +215,8 @@ class NuccChunkModel(NuccChunk):
         self.coord_index = br_chunk.meshBoneIndex
 
         # Create a Nud from the BrNud
-        self.nud = Nud(self.name, br_chunk.brNud)
+        self.nud = Nud()
+        self.nud.init_data(self.name, br_chunk.brNud)
 
         # Get the material chunks
         self.material_chunks: List[NuccChunkMaterial] = list()

@@ -7,24 +7,28 @@ class Nud:
     name: str  # chunk name
     mesh_groups: List['NudMeshGroup']
 
-    def __init__(self, name, br_nud: BrNud):
+    def init_data(self, name, br_nud: BrNud):
         self.name = name
 
         self.mesh_groups = list()
         for br_mesh_group in br_nud.meshGroups:
-            self.mesh_groups.append(NudMeshGroup(br_mesh_group))
+            mesh_group = NudMeshGroup()
+            mesh_group.init_data(br_mesh_group)
+            self.mesh_groups.append(mesh_group)
 
 
 class NudMeshGroup:
     name: str
     meshes: List['NudMesh']
 
-    def __init__(self, br_mesh_group: BrNudMeshGroup):
+    def init_data(self, br_mesh_group: BrNudMeshGroup):
         self.name = br_mesh_group.name
 
         self.meshes = list()
         for br_mesh in br_mesh_group.meshes:
-            self.meshes.append(NudMesh(br_mesh))
+            mesh = NudMesh()
+            mesh.init_data(br_mesh)
+            self.meshes.append(mesh)
 
 
 class NudMesh:
@@ -32,7 +36,7 @@ class NudMesh:
     faces: List[Tuple[int, int, int]]
     materials: List['NudMaterial']
 
-    def __init__(self, br_mesh: BrNudMesh):
+    def init_data(self, br_mesh: BrNudMesh):
         self.add_vertices(br_mesh.vertices)
         self.add_faces(br_mesh.faces, br_mesh.faceSize)
         self.add_materials(br_mesh.materials)
@@ -46,7 +50,9 @@ class NudMesh:
     def add_vertices(self, vertices: List[BrNudVertex]):
         self.vertices = list()
         for br_vertex in vertices:
-            self.vertices.append(NudVertex(br_vertex))
+            vertex = NudVertex()
+            vertex.init_data(br_vertex)
+            self.vertices.append(vertex)
 
     def add_faces(self, faces: List[int], faceSize: int):
         faces = iter(faces)
@@ -87,8 +93,10 @@ class NudMesh:
     def add_materials(self, materials: List[BrNudMaterial]):
         self.materials = list()
 
-        for material in materials:
-            self.materials.append(NudMaterial(material))
+        for br_material in materials:
+            material = NudMaterial()
+            material.init_data(br_material)
+            self.materials.append(material)
 
 
 class NudVertex:
@@ -103,7 +111,7 @@ class NudVertex:
     bone_ids: Tuple[int, int, int, int]
     bone_weights: Tuple[float, float, float, float]
 
-    def __init__(self, br_vertex: BrNudVertex):
+    def init_data(self, br_vertex: BrNudVertex):
         self.position = br_vertex.position
         self.normal = br_vertex.normals
         self.bitangent = br_vertex.biTangents if br_vertex.biTangents else None
@@ -117,7 +125,7 @@ class NudVertex:
 
 
 class NudMaterial:
-    def __init__(self, material: BrNudMaterial):
+    def init_data(self, material: BrNudMaterial):
         self.flags = material.flags
 
         self.sourceFactor = material.sourceFactor
@@ -132,16 +140,20 @@ class NudMaterial:
         self.zBufferOffset = material.zBufferOffset
 
         self.textures = list()
-        for texture in material.textures:
-            self.textures.append(NudMaterialTexture(texture))
+        for br_texture in material.textures:
+            texture = NudMaterialTexture()
+            texture.init_data(br_texture)
+            self.textures.append(texture)
 
         self.properties = list()
-        for property in [p for p in material.properties if p.name]:
-            self.properties.append(NudMaterialProperty(property))
+        for br_property in [p for p in material.properties if p.name]:
+            property = NudMaterialProperty()
+            property.init_data(br_property)
+            self.properties.append(property)
 
 
 class NudMaterialTexture:
-    def __init__(self, texture: BrNudMaterialTexture):
+    def init_data(self, texture: BrNudMaterialTexture):
         self.unk0 = texture.unk0
         self.mapMode = texture.mapMode
 
@@ -155,6 +167,6 @@ class NudMaterialTexture:
 
 
 class NudMaterialProperty:
-    def __init__(self, property: BrNudMaterialProperty):
+    def init_data(self, property: BrNudMaterialProperty):
         self.name = property.name
         self.values: List[float] = property.values
