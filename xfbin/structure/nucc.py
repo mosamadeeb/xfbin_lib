@@ -138,16 +138,21 @@ class NuccChunkClump(NuccChunk):
         self.model_groups: List[ClumpModelGroup] = list()
         for model_group in br_chunk.modelGroups:
             self.model_groups.append(ClumpModelGroup())
-            self.model_groups[-1].init_data(model_group, chunk_list, chunk_indices)
+            self.model_groups[-1].init_data(model_group, self.coord_chunks, chunk_list, chunk_indices)
 
 
 class ClumpModelGroup:
     def __init__(self) -> None:
         self.model_chunks: List[NuccChunkModel] = list()
 
-    def init_data(self, model_group: BrClumpModelGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+    def init_data(self, model_group: BrClumpModelGroup, coord_chunks: List['NuccChunkCoord'], chunk_list: List['NuccChunk'], chunk_indices: List[int]):
         self.model_chunks: List[NuccChunkModel] = list(
             map(lambda x: chunk_list[chunk_indices[x]], model_group.modelIndices))
+
+        for chunk in self.model_chunks:
+            # Set the model chunk's respective coord
+            if chunk.coord_index != -1:
+                chunk.coord_chunk = coord_chunks[chunk.coord_index]
 
 
 class NuccChunkCoord(NuccChunk):
