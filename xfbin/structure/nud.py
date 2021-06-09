@@ -36,10 +36,18 @@ class NudMesh:
     faces: List[Tuple[int, int, int]]
     materials: List['NudMaterial']
 
+    vertex_type: NudVertexType
+    bone_type: NudBoneType
+    uv_type: NudUvType
+
     def init_data(self, br_mesh: BrNudMesh):
         self.add_vertices(br_mesh.vertices)
         self.add_faces(br_mesh.faces, br_mesh.faceSize)
         self.add_materials(br_mesh.materials)
+
+        self.vertex_type = NudVertexType(br_mesh.vertexSize & 0x0F)
+        self.bone_type = NudBoneType(br_mesh.vertexSize & 0xF0)
+        self.uv_type = NudUvType(br_mesh.uvSize & 0x0F)
 
     def has_bones(self):
         return bool(self.vertices and self.vertices[0].bone_ids)

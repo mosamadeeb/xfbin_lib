@@ -189,11 +189,11 @@ class BrNudMesh(BrStruct):
                 uvType = self.uvSize & 0x0F
 
                 for i in range(self.vertexCount):
-                    if uvType == 0:
+                    if uvType == NudUvType.Null:
                         colors.append(None)
-                    elif uvType == 2:
+                    elif uvType == NudUvType.Byte:
                         colors.append(br.read_uint8(4))
-                    elif uvType == 4:
+                    elif uvType == NudUvType.HalfFloat:
                         colors.append(list(map(lambda x: x * 255, br.read_half_float(4))))
 
                     uvs.append(list())
@@ -225,9 +225,9 @@ class BrNudMesh(BrStruct):
         br.write_uint16(len(mesh.vertices))
 
         # Use the most comprehensive format by default
-        vertex_type = NudVertexType.NormalsTanBiTanFloat
-        bone_type = NudBoneType.Float if mesh.has_bones() else 0
-        uv_type = 0x2
+        vertex_type = mesh.vertex_type
+        bone_type = mesh.bone_type if mesh.has_bones() else 0
+        uv_type = mesh.uv_type
 
         # Write vertex size
         br.write_uint8(vertex_type | bone_type)
@@ -270,8 +270,10 @@ class BrNudMesh(BrStruct):
         if mesh.has_bones():
             vertex_br = buffers.vertAddClump
             for vertex in mesh.vertices:
-                # Only write single byte colors for now
-                buffers.vertClump.write_uint8(vertex.color)
+                if uv_type == NudUvType.Byte:
+                    buffers.vertClump.write_uint8(vertex.color)
+                elif uv_type == NudUvType.HalfFloat:
+                    buffers.vertClump.write_half_float(tuple(map(lambda x: x / 255, vertex.color)))
 
                 for uv in vertex.uv:
                     buffers.vertClump.write_half_float(uv)
@@ -296,6 +298,12 @@ class NudBoneType(IntFlag):
     Float = 0x10
     HalfFloat = 0x20
     Byte = 0x40
+
+
+class NudUvType(IntFlag):
+    Null = 0
+    Byte = 2
+    HalfFloat = 4
 
 
 class BrNudVertex(BrStruct):
@@ -362,8 +370,19 @@ class BrNudVertex(BrStruct):
     def __br_write__(self, br: 'BinaryReader', vertex: 'NudVertex', vertexType: NudVertexType, boneType: NudBoneType, uvType: int):
         br.write_float(vertex.position)
 
-        # TODO: Implement the rest of the formats (even though we're probably only going to be using these)
-        if vertexType == NudVertexType.NormalsTanBiTanFloat:
+        if vertexType == NudVertexType.NoNormals:
+            br.write_float(1.0)
+        elif vertexType == NudVertexType.NormalsFloat:
+            br.write_float(1.0)
+            br.write_float(vertex.normal)
+            br.write_float(1.0)
+        elif vertexType == NudVertexType.Unknown:
+            br.write_float(vertex.normal)
+            br.write_float(1.0)
+            br.write_float([1] * 3)
+            br.write_float([1] * 3)
+            br.write_float([1] * 3)
+        elif vertexType == NudVertexType.NormalsTanBiTanFloat:
             br.write_float(1.0)
             br.write_float(vertex.normal if vertex.normal else [0] * 3)
             br.write_float(1.0)
@@ -371,6 +390,18 @@ class BrNudVertex(BrStruct):
             br.write_float(0)
             br.write_float(vertex.tangent[:3] if vertex.tangent else [0] * 3)
             br.write_float(0)
+        elif vertexType == NudVertexType.NormalsHalfFloat:
+            br.write_half_float(vertex.normal)
+            br.write_half_float(1.0)
+        elif vertexType == NudVertexType.NormalsTanBiTanHalfFloat:
+            br.write_half_float(vertex.normal)
+            br.write_half_float(1.0)
+            br.write_half_float(vertex.bitangent[:3])
+            br.write_half_float(0)
+            br.write_half_float(vertex.tangent[:3])
+            br.write_half_float(0)
+        else:
+            raise Exception(f'Unsupported vertex type: {vertexType}')
 
         if boneType == NudBoneType.NoBones:
             if uvType:
@@ -381,6 +412,12 @@ class BrNudVertex(BrStruct):
         elif boneType == NudBoneType.Float:
             br.write_uint32(vertex.bone_ids)
             br.write_float(vertex.bone_weights)
+        elif boneType == NudBoneType.HalfFloat:
+            br.write_uint16(vertex.bone_ids)
+            br.write_half_float(vertex.bone_weights)
+        elif boneType == NudBoneType.Byte:
+            br.write_uint8(vertex.bone_ids)
+            br.write_float(tuple(map(lambda x: int(x * 255), vertex.bone_weights)))
 
 
 class BrNudMaterial(BrStruct):
@@ -409,7 +446,7 @@ class BrNudMaterial(BrStruct):
             matAttPos = br.pos()
             prop = br.read_struct(BrNudMaterialProperty, None, nameStart)
 
-            #if not (prop.valueCount == prop.nameStart == 0):
+            # if not (prop.valueCount == prop.nameStart == 0):
             self.properties.append(prop)
 
             if prop.matAttSize == 0:
