@@ -32,6 +32,9 @@ class NudMeshGroup:
 
 
 class NudMesh:
+    MAX_VERTICES = 32_767
+    MAX_FACES = 16_383
+
     vertices: List['NudVertex']
     faces: List[Tuple[int, int, int]]
     materials: List['NudMaterial']

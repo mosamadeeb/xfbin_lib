@@ -256,8 +256,6 @@ class BrNudMesh(BrStruct):
         br.write_uint32([0] * 3)
 
         # Write faces
-        # TODO: Add a limiter in the exporter.
-        # The maximum vertex index should be 32,767 and the maximum face count should be 16,383.
         for face in mesh.faces[:-1]:
             buffers.polyClump.write_int16((face[2], face[0], face[1]))
             buffers.polyClump.write_int16(-1)
