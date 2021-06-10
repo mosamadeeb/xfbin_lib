@@ -18,5 +18,6 @@ def write_xfbin(xfbin: Xfbin) -> bytearray:
 
 
 def write_xfbin_to_path(xfbin: Xfbin, path: str) -> None:
+    file = write_xfbin(xfbin)
     with open(path, 'wb') as f:
-        f.write(write_xfbin(xfbin))
+        f.write(file)
