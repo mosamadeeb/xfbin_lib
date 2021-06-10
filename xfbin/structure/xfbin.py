@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict, List, Optional, Tuple, Union
 
 from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial, NuccChunkNull,
-                   NuccChunkPage)
+                   NuccChunkPage, NuccChunkTexture)
 
 
 class Page:
@@ -132,6 +132,7 @@ class Xfbin:
 
         clump_page = Page()
         materials: List[NuccChunkMaterial] = list()
+        textures: List[NuccChunkTexture] = list()
         texture_pages: List[Page] = list()
 
         # Remove the old clump page if it exists
@@ -152,15 +153,17 @@ class Xfbin:
         # Add the clump chunk
         clump_page.add_chunk(clump)
 
-        # Add the material chunks
-        for material in materials:
+        # Add the unique material chunks
+        for material in list(dict(*materials).fromkeys()):
             clump_page.add_chunk(material)
+            textures.extend(list(chain(*material.texture_groups)))
 
-            for texture in material:
-                # Add each texture chunk to a new page or update its page if it exists
-                if not self.update_chunk_page(texture):
-                    texture_pages.append(Page())
-                    texture_pages[-1].add_chunk(texture)
+        # Add the unique texture chunks
+        for texture in list(dict(*textures).fromkeys()):
+            # Add each texture chunk to a new page or update its page if it exists
+            if not self.update_chunk_page(texture):
+                texture_pages.append(Page())
+                texture_pages[-1].add_chunk(texture)
 
         # Add the new texture pages before the clump page
         self.pages.extend(texture_pages)
