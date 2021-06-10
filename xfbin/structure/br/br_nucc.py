@@ -337,51 +337,59 @@ class BrNuccChunkModel(BrNuccChunk):
 
 
 class BrNuccChunkMaterial(BrNuccChunk):
+    @staticmethod
+    def float_count(format) -> int:
+        count = 0
+
+        if format & 0x40:
+            count += 1
+        if format & 0x20:
+            count += 1
+        if format & 0x10:
+            count += 2
+        if format & 0x04:
+            count += 4
+        if format & 0x02:
+            count += 4
+        if format & 0x01:
+            count += 4
+
+        return count
+
     def init_data(self, br: BinaryReader):
         super().init_data(br)
 
         self.groupCount = br.read_uint16()
 
-        self.unk = br.read_uint8()  # 0xFE in Storm 1, 0xCD in JoJo and Storm 4. Should actually find out what it does
+        # 0xFE in Storm 1, 0xCD in JoJo and Storm 4. Should actually find out what it does
+        self.field02 = br.read_uint8()
         br.read_uint8()  # 0
 
-        self.unkFloat = br.read_float()
+        self.field04 = br.read_float()
 
+        # Padding
         br.read_uint8(3)
+
         self.format = br.read_uint8()
-
-        float_count = 0
-        if self.format & 0x40:
-            float_count += 1
-        if self.format & 0x20:
-            float_count += 1
-        if self.format & 0x10:
-            float_count += 2
-        if self.format & 0x04:
-            float_count += 4
-        if self.format & 0x02:
-            float_count += 4
-        if self.format & 0x01:
-            float_count += 4
-
-        self.floats = br.read_float(float_count)
+        self.floats = br.read_float(self.float_count(self.format))
 
         self.textureGroups = br.read_struct(BrMaterialTextureGroup, self.groupCount)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         br.write_uint16(len(self.nuccChunk.texture_groups))
 
-        br.write_uint8(0xCD)
+        br.write_uint8(self.nuccChunk.field02)
         br.write_uint8(0)
 
-        br.write_float(0)  # Usually 0, but can be 0.12 and other numbers
+        # Usually 0, but can be 0.12 and other numbers
+        br.write_float(self.nuccChunk.field04)
 
         # Padding
         br.write_uint8([0] * 3)
 
         # Float format
         br.write_uint8(self.nuccChunk.format if self.nuccChunk.floats else 0)
-        br.write_float(self.nuccChunk.floats)
+        br.write_float(self.nuccChunk.floats[:self.float_count(self.nuccChunk.format)])
 
         for group in self.nuccChunk.texture_groups:
             br.write_struct(BrMaterialTextureGroup(), group, chunkIndexDict)

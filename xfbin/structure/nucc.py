@@ -249,8 +249,8 @@ class NuccChunkMaterial(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.material'
 
-        self.field02 = br_chunk.unk
-        self.field04 = br_chunk.unkFloat
+        self.field02 = br_chunk.field02
+        self.field04 = br_chunk.field04
 
         self.format = br_chunk.format
         self.floats = br_chunk.floats
@@ -258,6 +258,11 @@ class NuccChunkMaterial(NuccChunk):
         self.texture_groups: List[MaterialTextureGroup] = list()
         for group in br_chunk.textureGroups:
             self.texture_groups.append(MaterialTextureGroup(group, chunk_list, chunk_indices))
+
+    # Wrapper method
+    @staticmethod
+    def float_count(format) -> int:
+        return BrNuccChunkMaterial.float_count(format)
 
     def __iter__(self):
         all_textures: Set[NuccChunkTexture] = set()
