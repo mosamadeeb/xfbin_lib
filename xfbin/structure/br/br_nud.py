@@ -433,7 +433,7 @@ class BrNudMaterial(BrStruct):
         self.refAlpha = br.read_uint16()
         self.cullMode = br.read_uint16()
         br.read_uint32(2)
-        self.zBufferOffset = br.read_uint32()
+        self.zBufferOffset = br.read_int32()
 
         # Read texture proprties
         self.textures = br.read_struct(BrNudMaterialTexture, self.textureCount)
@@ -485,7 +485,7 @@ class BrNudMaterialTexture(BrStruct):
     def __br_read__(self, br: BinaryReader) -> None:
         # This is not the hash, because that does not exist in CC2 NUDs.
         # Apparently, 0 makes it completely ignore the NUT texture, while -1 makes it use it
-        self.unk0 = br.read_uint32()
+        self.unk0 = br.read_int32()
         br.read_uint32()
 
         br.read_uint16()
