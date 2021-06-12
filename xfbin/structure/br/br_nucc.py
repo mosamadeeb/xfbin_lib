@@ -177,11 +177,11 @@ class BrNuccChunkClump(BrNuccChunk):
             self.modelGroups.append(modelGroup)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
-        br.write_uint32(0)
+        br.write_uint32(self.nuccChunk.field00)
 
         br.write_uint16(len(self.nuccChunk.coord_chunks))
-        br.write_uint8(0)  # TODO: Write actual flags
-        br.write_uint8(0)
+        br.write_uint8(self.nuccChunk.coord_flag0)
+        br.write_uint8(self.nuccChunk.coord_flag1)
 
         # Enumerate the coord chunks because the parent indices are respective to the local coord indices list, not the page indices
         coord_chunks_dict = IterativeDict()
@@ -195,14 +195,18 @@ class BrNuccChunkClump(BrNuccChunk):
         br.write_uint32(coord_chunks)
 
         br.write_uint16(len(self.nuccChunk.model_chunks))
-        br.write_uint8(0)  # TODO: Write actual flags
-        br.write_uint8(0)
+        br.write_uint8(self.nuccChunk.model_flag0)
+        br.write_uint8(self.nuccChunk.model_flag0)
 
+        # TODO: is this correct?
         br.write_uint32(0)
+
         br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.model_chunks)))
 
         for group in self.nuccChunk.model_groups:
             br.write_struct(BrClumpModelGroup(), group, chunkIndexDict)
+
+        br.write_int16(-1)
 
 
 class BrClumpModelGroup(BrStruct):
@@ -213,27 +217,24 @@ class BrClumpModelGroup(BrStruct):
             self.flag0 = br.read_uint8()
             self.flag1 = br.read_uint8()
 
-            # Seems to be some signed 8 bit integers
-            self.unk = br.read_int8(4)
+            # Seems to be some 4 signed 8 bit integers
+            self.unk = br.read_int32()
 
             self.modelIndices = list()
             for _ in range(self.modelCount):
-                index = br.read_int32()
-
                 # There might be -1 indices, but we're not sure what they're used for
                 # Can be found in Storm 1 spc xfbins
-                if index != -1:
-                    self.modelIndices.append(index)
+                self.modelIndices.append(br.read_int32())
 
     def __br_write__(self, br: 'BinaryReader', model_group: 'ClumpModelGroup', chunkIndexDict: IterativeDict):
         br.write_uint16(len(model_group.model_chunks))
 
-        br.write_uint8(0)  # TODO: Write actual flags
-        br.write_uint8(0)
+        br.write_uint8(model_group.flag0)
+        br.write_uint8(model_group.flag1)
 
-        br.write_uint32(0x7F_7F_FF_FF)
+        br.write_int32(model_group.unk)
 
-        br.write_int32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), model_group.model_chunks)))
+        br.write_int32(tuple(map(lambda x: chunkIndexDict.get_or_next(x) if x else -1, model_group.model_chunks)))
 
 
 class BrNuccChunkModel(BrNuccChunk):
@@ -401,7 +402,7 @@ class BrMaterialTextureGroup(BrStruct):
         br.read_uint16()
 
         # Probably a flag
-        self.unk = br.read_uint32()
+        self.unk = br.read_int32()
 
         self.textureIndices = br.read_uint32(self.textureCount)
 
@@ -410,7 +411,7 @@ class BrMaterialTextureGroup(BrStruct):
         br.write_uint16(0)
 
         # Can be safely set to 0
-        br.write_uint32(0)
+        br.write_int32(texture_group.unk)
 
         # Write the texture chunk indices
         br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), texture_group.texture_chunks)))

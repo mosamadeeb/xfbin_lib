@@ -108,6 +108,14 @@ class NuccChunkClump(NuccChunk):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.clump'
 
+        self.field00 = br_chunk.field00
+
+        self.coord_flag0 = br_chunk.coordFlag0
+        self.coord_flag1 = br_chunk.coordFlag1
+
+        self.model_flag0 = br_chunk.modelFlag0
+        self.model_flag1 = br_chunk.modelFlag1
+
         # Get the coord chunks
         self.coord_chunks: List[NuccChunkCoord] = list()
         for i in br_chunk.coordNodeIndices:
@@ -146,12 +154,16 @@ class ClumpModelGroup:
         self.model_chunks: List[NuccChunkModel] = list()
 
     def init_data(self, model_group: BrClumpModelGroup, coord_chunks: List['NuccChunkCoord'], chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+        self.flag0 = model_group.flag0
+        self.flag1 = model_group.flag1
+        self.unk = model_group.unk
+
         self.model_chunks: List[NuccChunkModel] = list(
-            map(lambda x: chunk_list[chunk_indices[x]], model_group.modelIndices))
+            map(lambda x: chunk_list[chunk_indices[x]] if x != -1 else None, model_group.modelIndices))
 
         for chunk in self.model_chunks:
             # Set the model chunk's respective coord
-            if chunk.coord_index != -1:
+            if chunk and chunk.coord_index != -1:
                 chunk.coord_chunk = coord_chunks[chunk.coord_index]
 
 
@@ -178,7 +190,7 @@ class CoordNode:
 
         self.position = (0.0,) * 3
         self.rotation = (0.0,) * 3
-        self.scale = (1.0) * 3
+        self.scale = (1.0,) * 3
         self.unkFloat = 1.0
         self.unkShort = 0
 

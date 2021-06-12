@@ -9,6 +9,7 @@ class Nud:
 
     def init_data(self, name, br_nud: BrNud):
         self.name = name
+        self.bounding_sphere = br_nud.boundingSphere
 
         self.mesh_groups = list()
         for br_mesh_group in br_nud.meshGroups:
@@ -23,6 +24,8 @@ class NudMeshGroup:
 
     def init_data(self, br_mesh_group: BrNudMeshGroup):
         self.name = br_mesh_group.name
+        self.bone_flags = br_mesh_group.boneFlags
+        self.bounding_sphere = br_mesh_group.boundingSphere
 
         self.meshes = list()
         for br_mesh in br_mesh_group.meshes:
@@ -51,6 +54,7 @@ class NudMesh:
         self.vertex_type = NudVertexType(br_mesh.vertexSize & 0x0F)
         self.bone_type = NudBoneType(br_mesh.vertexSize & 0xF0)
         self.uv_type = NudUvType(br_mesh.uvSize & 0x0F)
+        self.face_flag = br_mesh.faceFlag
 
     def has_bones(self):
         return bool(self.vertices and self.vertices[0].bone_ids)
@@ -147,6 +151,8 @@ class NudMaterial:
 
         self.refAlpha = material.refAlpha
         self.cullMode = material.cullMode
+        self.unk1 = material.unk1
+        self.unk2 = material.unk2
 
         self.zBufferOffset = material.zBufferOffset
 

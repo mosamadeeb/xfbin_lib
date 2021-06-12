@@ -78,8 +78,8 @@ class BrNud(BrStruct):
         br.write_uint32(0)  # vertClumpSize
         br.write_uint32(0)  # vertAddClumpSize
 
-        # Bounding sphere probably isn't used
-        br.write_float([0] * 4)
+        # Bounding sphere affects if some meshes appear at all (tested with Storm 1 eyes)
+        br.write_float(nud.bounding_sphere)
 
         # Write the mesh groups buffer
         br.extend(mesh_groups_buffer)
@@ -134,7 +134,7 @@ class BrNudMeshGroup(BrStruct):
 
     def __br_write__(self, br: 'BinaryReader', mesh_group: 'NudMeshGroup', buffers: NudBuffers, mesh_groups_count, mesh_count):
         # Bounding sphere
-        br.write_float([0] * 8)
+        br.write_float(mesh_group.bounding_sphere)
 
         # Name start in names buffer
         br.write_uint32(buffers.names.size())
@@ -144,7 +144,7 @@ class BrNudMeshGroup(BrStruct):
         buffers.names.write_str(mesh_group.name, True)
 
         br.write_uint16(0)
-        br.write_uint16(0x14)  # Should be safe to leave it like this
+        br.write_uint16(mesh_group.bone_flags)
         br.write_int16(-1)
         br.write_int16(len(mesh_group.meshes))
 
@@ -250,7 +250,7 @@ class BrNudMesh(BrStruct):
 
         # Unlike the usual 0x04 and 0x40 formats, CC2 NUDs only support strips (0x04) but this flag is always 0
         br.write_uint8(0)
-        br.write_uint8(0x04)
+        br.write_uint8(mesh.face_flag)
 
         # Padding
         br.write_uint32([0] * 3)
@@ -432,7 +432,8 @@ class BrNudMaterial(BrStruct):
 
         self.refAlpha = br.read_uint16()
         self.cullMode = br.read_uint16()
-        br.read_uint32(2)
+        self.unk1 = br.read_float()  # Always 0 (?)
+        self.unk2 = br.read_float()  # Usually 0, sometimes 1 (in Storm 1 eyes)
         self.zBufferOffset = br.read_int32()
 
         # Read texture proprties
@@ -465,8 +466,8 @@ class BrNudMaterial(BrStruct):
 
         br.write_uint16(material.refAlpha)
         br.write_uint16(material.cullMode)
-        br.write_uint32(0)
-        br.write_uint32(0)
+        br.write_float(material.unk1)
+        br.write_float(material.unk2)
         br.write_int32(material.zBufferOffset)
 
         # Write texture properties
