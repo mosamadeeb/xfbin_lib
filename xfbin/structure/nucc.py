@@ -257,7 +257,9 @@ class NuccChunkMaterial(NuccChunk):
 
         self.texture_groups: List[MaterialTextureGroup] = list()
         for group in br_chunk.textureGroups:
-            self.texture_groups.append(MaterialTextureGroup(group, chunk_list, chunk_indices))
+            g = MaterialTextureGroup()
+            g.init_data(group, chunk_list, chunk_indices)
+            self.texture_groups.append(g)
 
     # Wrapper method
     @staticmethod
@@ -274,7 +276,7 @@ class NuccChunkMaterial(NuccChunk):
 
 
 class MaterialTextureGroup:
-    def __init__(self, texture_group: BrMaterialTextureGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
+    def init_data(self, texture_group: BrMaterialTextureGroup, chunk_list: List['NuccChunk'], chunk_indices: List[int]):
         self.unk = texture_group.unk
 
         self.texture_chunks: List[NuccChunkTexture] = list()

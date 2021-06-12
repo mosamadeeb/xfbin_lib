@@ -467,7 +467,7 @@ class BrNudMaterial(BrStruct):
         br.write_uint16(material.cullMode)
         br.write_uint32(0)
         br.write_uint32(0)
-        br.write_uint32(material.zBufferOffset)
+        br.write_int32(material.zBufferOffset)
 
         # Write texture properties
         for texture in material.textures:
@@ -502,7 +502,7 @@ class BrNudMaterialTexture(BrStruct):
         self.unk2 = br.read_int16()
 
     def __br_write__(self, br: 'BinaryReader', texture: 'NudMaterialTexture') -> None:
-        br.write_uint32(texture.unk0)
+        br.write_int32(texture.unk0)
         br.write_uint32(0)
 
         br.write_uint16(0)
