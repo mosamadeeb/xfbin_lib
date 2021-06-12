@@ -112,6 +112,27 @@ class BrNuccChunkDynamics(BrNuccChunk):
         # Read all shorts as a single tuple for now
         self.section1Shorts = br.read_uint16(sum(map(lambda x: x.unkCount, self.section1)))
 
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        chunk = self.nuccChunk
+
+        br.write_uint16(len(chunk.section1))
+        br.write_uint16(len(chunk.section2))
+
+        br.write_uint32(chunkIndexDict.get_or_next(chunk.clump_chunk))
+
+        # Write the section 1 shorts while iterating over it
+        br_sec1_shorts = BinaryReader(endianness=Endian.BIG)
+
+        for sec1 in chunk.section1:
+            br.write_struct(BrDynamics1(), sec1)
+            br_sec1_shorts.write_uint16(sec1.shorts)
+
+        for sec2 in chunk.section2:
+            br.write_struct(BrDynamics2(), sec2)
+
+        br.extend(br_sec1_shorts.buffer())
+        br.seek(br_sec1_shorts.size(), Whence.CUR)
+
 
 # Placeholder names for now
 class BrDynamics1(BrStruct):
@@ -121,6 +142,12 @@ class BrDynamics1(BrStruct):
         # Coord index in the clump's coord indices
         self.coordIndex = br.read_uint16()
         self.unkCount = br.read_uint16()
+
+    def __br_write__(self, br: 'BinaryReader', sec1: 'Dynamics1'):
+        br.write_float(sec1.floats)
+
+        br.write_uint16(sec1.coord_index)
+        br.write_uint16(len(sec1.shorts))
 
 
 class BrDynamics2(BrStruct):
@@ -135,7 +162,21 @@ class BrDynamics2(BrStruct):
 
         self.unkShortTuples = list()
         for _ in range(self.unkCount):
-            self.unkShortTuples.append(br.read_uint16(2))
+            # Each entry contains the count, and the values. They're all 16-bit ints
+            self.unkShortTuples.append(br.read_uint16(br.read_uint16()))
+
+    def __br_write__(self, br: 'BinaryReader', sec2: 'Dynamics2'):
+        br.write_float(sec2.floats)
+
+        br.write_uint16(sec2.coord_index)
+        br.write_uint16(len(sec2.unk_short_tuples))
+
+        br.write_int16(sec2.negative_unk)
+        br.write_uint16(0)
+
+        for tup in sec2.unk_short_tuples:
+            br.write_uint16(len(tup))
+            br.write_uint16(tup)
 
 
 class BrNuccChunkAnm(BrNuccChunk):

@@ -1,5 +1,5 @@
 from enum import IntFlag
-from typing import List, Optional, Set
+from typing import Iterator, List, Optional, Set
 
 from ..util import *
 from .br.br_nucc import *
@@ -95,6 +95,44 @@ class NuccChunkDynamics(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.dynamics'
+
+        self.clump_chunk: NuccChunkClump = chunk_list[chunk_indices[br_chunk.clumpChunkIndex]]
+
+        # Make an iterator to give each Dynamics1 entry its own values
+        sec1_shorts = iter(br_chunk.section1Shorts)
+
+        self.section1: List[Dynamics1] = list()
+        for sec1 in br_chunk.section1:
+            d = Dynamics1()
+            d.init_data(sec1, sec1_shorts)
+            self.section1.append(d)
+
+        self.section2: List[Dynamics2] = list()
+        for sec2 in br_chunk.section2:
+            d = Dynamics2()
+            d.init_data(sec2)
+            self.section2.append(d)
+
+
+class Dynamics1:
+    def init_data(self, sec1: BrDynamics1, sec1_shorts: Iterator):
+        self.floats = sec1.floats
+        self.coord_index = sec1.coordIndex
+
+        self.shorts = list()
+        for _ in range(sec1.unkCount):
+            self.shorts.append(next(sec1_shorts))
+
+
+class Dynamics2:
+    def init_data(self, sec2: BrDynamics2):
+        self.floats = sec2.floats
+        self.coord_index = sec2.coordIndex
+
+        # Should always be -1, but let's store it just in case
+        self.negative_unk = sec2.negativeUnk
+
+        self.unk_short_tuples = list(sec2.unkShortTuples)
 
 
 class NuccChunkAnm(NuccChunk):
