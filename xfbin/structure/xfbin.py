@@ -156,12 +156,12 @@ class Xfbin:
         clump_page.add_chunk(clump)
 
         # Add the unique material chunks
-        for material in list(dict.fromkeys(chain(*materials))):
+        for material in list(dict.fromkeys(materials)):
             clump_page.add_chunk(material)
             textures.extend(list(chain(*material.texture_groups)))
 
         # Add the unique texture chunks
-        for texture in list(dict.fromkeys(chain(*textures))):
+        for texture in list(dict.fromkeys(textures)):
             # Add each texture chunk to a new page or update its page if it exists
             if not self.update_chunk_page(texture):
                 texture_pages.append(Page())
