@@ -204,6 +204,9 @@ class ClumpModelGroup:
             if chunk and chunk.coord_index != -1:
                 chunk.coord_chunk = coord_chunks[chunk.coord_index]
 
+    def __iter__(self):
+        return iter(self.model_chunks)
+
 
 class NuccChunkCoord(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkCoord, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):

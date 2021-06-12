@@ -141,10 +141,12 @@ class Xfbin:
             index, _ = existing_page
             self.pages.pop(index)
 
-        # Add the model chunks
-        for model in clump.model_chunks:
-            clump_page.add_chunk(model)
-            materials.extend(model.material_chunks)
+        # Add the unique model chunks
+        for model in list(dict.fromkeys(chain(clump.model_chunks, *clump.model_groups))):
+            # Clump model groups can have None references, so skip those
+            if model:
+                clump_page.add_chunk(model)
+                materials.extend(model.material_chunks)
 
         # Add the coord chunks
         for coord in clump.coord_chunks:
@@ -154,18 +156,16 @@ class Xfbin:
         clump_page.add_chunk(clump)
 
         # Add the unique material chunks
-        if materials:
-            for material in list(dict.fromkeys(*materials)):
-                clump_page.add_chunk(material)
-                textures.extend(list(chain(*material.texture_groups)))
+        for material in list(dict.fromkeys(chain(*materials))):
+            clump_page.add_chunk(material)
+            textures.extend(list(chain(*material.texture_groups)))
 
         # Add the unique texture chunks
-        if textures:
-            for texture in list(dict.fromkeys(*textures)):
-                # Add each texture chunk to a new page or update its page if it exists
-                if not self.update_chunk_page(texture):
-                    texture_pages.append(Page())
-                    texture_pages[-1].add_chunk(texture)
+        for texture in list(dict.fromkeys(chain(*textures))):
+            # Add each texture chunk to a new page or update its page if it exists
+            if not self.update_chunk_page(texture):
+                texture_pages.append(Page())
+                texture_pages[-1].add_chunk(texture)
 
         # Add the new texture pages before the clump page
         self.pages.extend(texture_pages)
