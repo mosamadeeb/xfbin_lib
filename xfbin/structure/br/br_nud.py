@@ -41,7 +41,6 @@ class BrNud(BrStruct):
             g.meshes = br.read_struct(BrNudMesh, g.meshCount, self)
 
     def __br_write__(self, br: 'BinaryReader', nud: 'Nud'):
-
         buffers = NudBuffers()
         with BinaryReader(endianness=Endian.BIG) as br_internal:
             mesh_group_count = len(nud.mesh_groups)
@@ -68,10 +67,10 @@ class BrNud(BrStruct):
         # Mesh group count
         br.write_uint16(len(nud.mesh_groups))
 
-        # These can be set to the min/max of the values with no issues, since the
-        # bone IDs are actually global across all models in an xfbin page
-        br.write_uint16(0)  # Start bone index
-        br.write_uint16(0xFFFF)  # End bone index
+        # The bone IDs are actually global across all models in an xfbin page, but these values should be valid
+        # as they would break JoJo xfbins otherwise
+        # Start and end bone indices
+        br.write_uint16(nud.get_bone_range())
 
         br.write_uint32(len(mesh_groups_buffer))  # polyClumpStart
         br.write_uint32(0)  # polyClumpSize
