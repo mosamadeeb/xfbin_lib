@@ -389,6 +389,8 @@ class BrNuccChunkMaterial(BrNuccChunk):
             count += 1
         if format & 0x10:
             count += 2
+        if format & 0x08:
+            count += 4
         if format & 0x04:
             count += 4
         if format & 0x02:
