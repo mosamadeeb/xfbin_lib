@@ -75,6 +75,9 @@ class NudMesh:
     def has_bones(self):
         return bool(self.vertices and self.vertices[0].bone_ids)
 
+    def has_color(self):
+        return bool(self.vertices and self.vertices[0].color)
+
     def get_uv_channel_count(self):
         return len(self.vertices[0].uv) if bool(self.vertices and self.vertices[0].uv) else 0
 

@@ -217,16 +217,16 @@ class BrNudMesh(BrStruct):
             i += 1
 
     def __br_write__(self, br: 'BinaryReader', mesh: 'NudMesh', buffers: NudBuffers, mesh_groups_count, mesh_count):
+        # Set the formats we're going to use
+        vertex_type = mesh.vertex_type
+        bone_type = mesh.bone_type if mesh.has_bones() else NudBoneType.NoBones
+        uv_type = mesh.uv_type if mesh.has_color() else NudUvType.Null
+
         br.write_uint32(buffers.polyClump.size())
         br.write_uint32(buffers.vertClump.size())
-        br.write_uint32(buffers.vertAddClump.size() if mesh.has_bones() else 0)
+        br.write_uint32(buffers.vertAddClump.size() if bone_type else 0)
 
         br.write_uint16(len(mesh.vertices))
-
-        # Use the most comprehensive format by default
-        vertex_type = mesh.vertex_type
-        bone_type = mesh.bone_type if mesh.has_bones() else 0
-        uv_type = mesh.uv_type
 
         # Write vertex size
         br.write_uint8(vertex_type | bone_type)
