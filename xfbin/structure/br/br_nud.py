@@ -189,11 +189,11 @@ class BrNudMesh(BrStruct):
 
                 for i in range(self.vertexCount):
                     if uvType == NudUvType.Null:
-                        colors.append(None)
+                        pass
                     elif uvType == NudUvType.Byte:
                         colors.append(br.read_uint8(4))
                     elif uvType == NudUvType.HalfFloat:
-                        colors.append(list(map(lambda x: x * 255, br.read_half_float(4))))
+                        colors.append(list(map(lambda x: int(x * 255), br.read_half_float(4))))
 
                     uvs.append(list())
                     for _ in range(uvCount):
@@ -231,12 +231,12 @@ class BrNudMesh(BrStruct):
         # Write vertex size
         br.write_uint8(vertex_type | bone_type)
 
-        # Use single byte colors by default
-        br.write_uint8((mesh.get_uv_channel_count() << 4) | uv_type if mesh.get_uv_channel_count() else 0)
+        # Write UV and vertex color format
+        br.write_uint8((mesh.get_uv_channel_count() << 4) | uv_type)
 
         # Write materials
         tex_props = [0] * 4
-        for i, material in enumerate(mesh.materials):
+        for i, material in enumerate(mesh.materials[:4]):
             tex_props[i] = buffers.materials.size() + 0x30 + (mesh_groups_count * 0x30) + (mesh_count * 0x30)
             buffers.materials.write_struct(BrNudMaterial(), material, buffers)
 
