@@ -265,7 +265,7 @@ class BrNudMesh(BrStruct):
 
         # Write UV + vertices
         vertex_br = buffers.vertClump
-        if mesh.has_bones():
+        if bone_type != NudBoneType.NoBones:
             vertex_br = buffers.vertAddClump
             for vertex in mesh.vertices:
                 if uv_type == NudUvType.Byte:
