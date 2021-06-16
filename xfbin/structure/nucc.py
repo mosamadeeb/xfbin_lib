@@ -93,6 +93,9 @@ class NuccChunkTexture(NuccChunk):
         self.width = br_chunk.width
         self.height = br_chunk.width
 
+        # Placeholder until full Nut support is implemented
+        self.nut_data = br_chunk.nut_data
+
         # TODO: Implement Nut
         #self.nut = Nut(br_chunk.brNut)
 

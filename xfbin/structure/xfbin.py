@@ -164,7 +164,7 @@ class Xfbin:
         for texture in list(dict.fromkeys(textures)):
             # Add each texture chunk to a new page or update its page if it exists
             # If the chunk does not have data, ignore it
-            if texture.nut:
+            if texture.nut or texture.data:
                 if not self.update_chunk_page(texture):
                     texture_pages.append(Page())
                     texture_pages[-1].add_chunk(texture)
