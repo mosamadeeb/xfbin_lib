@@ -82,10 +82,10 @@ class NuccChunkIndex(NuccChunk):
 class NuccChunkTexture(NuccChunk):
     def __init__(self, file_path, name):
         super().__init__(file_path, name)
-        
+
         # Set these to None in case a texture is a reference only and isn't contained in the xfbin
         self.data = self.nut = None
-        
+
     def init_data(self, br_chunk: BrNuccChunkTexture, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
         self.extension = '.nut'
@@ -185,9 +185,11 @@ class NuccChunkClump(NuccChunk):
             model: NuccChunkModel = chunk_list[chunk_indices[i]]
             self.model_chunks.append(model)
 
-            # Set the model chunk's respective coord
-            if model.coord_index != -1:
-                model.coord_chunk = self.coord_chunks[model.coord_index]
+            # There are other types of chunks that can be used as models (Billboard for example)
+            if isinstance(model, NuccChunkModel):
+                # Set the model chunk's respective coord
+                if model.coord_index != -1:
+                    model.coord_chunk = self.coord_chunks[model.coord_index]
 
         # Initialize the model groups
         self.model_groups: List[ClumpModelGroup] = list()

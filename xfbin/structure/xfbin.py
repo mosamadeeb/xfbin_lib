@@ -5,9 +5,16 @@ from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial, NuccChunkNull,
                    NuccChunkPage, NuccChunkTexture)
 
 
+class ChunkReference:
+    def __init__(self, name: str, chunk: NuccChunk):
+        self.name = name
+        self.chunk = chunk
+
+
 class Page:
     def __init__(self):
         self.chunks: List[NuccChunk] = list()
+        self.chunk_references: List[ChunkReference] = list()
 
     def __iter__(self):
         return iter(self.chunks)

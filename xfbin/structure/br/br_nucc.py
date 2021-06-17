@@ -60,10 +60,10 @@ class BrNuccChunkPage(BrNuccChunk):
         self.pageSize = br.read_uint32()
         self.referenceSize = br.read_uint32()
 
-    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict, chunkReferences: List):
         # Write the size of the dictionary, and add 1 for the index chunk after this chunk
         br.write_uint32(len(chunkIndexDict) + 1)
-        br.write_uint32(0)  # TODO: Add support for chunk references size
+        br.write_uint32(len(chunkReferences))
 
 
 class BrNuccChunkIndex(BrNuccChunk):
