@@ -26,6 +26,11 @@ class NuccChunk:
         """
         self.data = br_chunk.data
 
+        # Temporary way to store referenced chunks for rebuilding
+        # TODO: Maybe replace this with a better solution later
+        self.chunks = [chunk_list[x]
+                       for x in chunk_indices if not isinstance(chunk_list[x], (NuccChunkPage, NuccChunkIndex))]
+
     @classmethod
     def get_nucc_type_from_str(cls, type_str: str) -> type:
         type_name = type_str[0].upper() + type_str[1:]
@@ -87,7 +92,7 @@ class NuccChunkTexture(NuccChunk):
         self.data = self.nut = None
 
     def init_data(self, br_chunk: BrNuccChunkTexture, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.nut'
 
         self.width = br_chunk.width
@@ -102,7 +107,7 @@ class NuccChunkTexture(NuccChunk):
 
 class NuccChunkDynamics(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.dynamics'
 
         self.clump_chunk: NuccChunkClump = chunk_list[chunk_indices[br_chunk.clumpChunkIndex]]
@@ -152,7 +157,7 @@ class NuccChunkAnm(NuccChunk):
 
 class NuccChunkClump(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.clump'
 
         self.field00 = br_chunk.field00
@@ -221,7 +226,7 @@ class ClumpModelGroup:
 
 class NuccChunkCoord(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkCoord, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.coord'
 
         # Pass a reference to the chunk itself for accessing it later
@@ -264,7 +269,7 @@ class CoordNode:
 
 class NuccChunkModel(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkModel, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.nud'
 
         # Store the rigging flag to use when writing, if the rigging flag was not specified while exporting
@@ -310,7 +315,7 @@ class RiggingFlag(IntFlag):
 
 class NuccChunkMaterial(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkMaterial, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.data = br_chunk.data
         self.extension = '.material'
 
         self.field02 = br_chunk.field02

@@ -29,6 +29,11 @@ class BrNuccChunk(BrStruct):
         br.extend(self.nuccChunk.data)
         br.seek(len(self.nuccChunk.data), Whence.CUR)
 
+        # Try to add the referenced chunks in the same order they were added
+        # This should work fine unless some other chunk in this page (before this chunk) got modified
+        # TODO: Maybe replace this with a better solution later
+        chunkIndexDict.update_or_next(self.nuccChunk.chunks)
+
     @classmethod
     def get_br_nucc_type_from_str(cls, type_str: str) -> type:
         # Get the type from a string after capitalizing its first character and prepending "Br" to it
