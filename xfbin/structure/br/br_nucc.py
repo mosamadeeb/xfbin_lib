@@ -488,6 +488,15 @@ class BrNuccChunkCoord(BrNuccChunk):
         self.unkFloat = br.read_float()   # Might be part of scale
         self.unkShort = br.read_uint16()  # Not always 0
 
+    def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
+        node = self.nuccChunk.node
+
+        br.write_float(node.position)
+        br.write_float(node.rotation)
+        br.write_float(node.scale)
+        br.write_float(node.unkFloat)
+        br.write_uint16(node.unkShort)
+
 
 class BrNuccChunkBillboard(BrNuccChunk):
     def init_data(self, br: BinaryReader):
