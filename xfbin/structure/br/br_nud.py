@@ -189,7 +189,7 @@ class BrNudMesh(BrStruct):
 
                 for i in range(self.vertexCount):
                     if uvType == NudUvType.Null:
-                        pass
+                        colors.append(tuple())
                     elif uvType == NudUvType.Byte:
                         colors.append(br.read_uint8(4))
                     elif uvType == NudUvType.HalfFloat:
