@@ -285,6 +285,15 @@ class CoordNode:
 
         return result
 
+    def copy_from(self, other: 'CoordNode'):
+        """Copies the contents of another node into this node without changing the parenting relations."""
+        
+        self.position = other.position
+        self.rotation = other.rotation
+        self.scale = other.scale
+        self.unkFloat = other.unkFloat
+        self.unkShort = other.unkShort
+
 
 class NuccChunkModel(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkModel, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
