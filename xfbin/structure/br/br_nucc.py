@@ -277,7 +277,7 @@ class BrClumpModelGroup(BrStruct):
     def __br_read__(self, br: 'BinaryReader') -> None:
         self.modelCount = br.read_int16()
 
-        if self.modelCount != -1:
+        if self.modelCount != -1 and not br.eof():
             self.flag0 = br.read_uint8()
             self.flag1 = br.read_uint8()
 
