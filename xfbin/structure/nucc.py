@@ -202,6 +202,25 @@ class NuccChunkClump(NuccChunk):
             self.model_groups.append(ClumpModelGroup())
             self.model_groups[-1].init_data(model_group, self.coord_chunks, chunk_list, chunk_indices)
 
+    def clear_non_model_chunks(self, model_list: bool = True, model_groups: bool = True, none_refs: bool = False) -> int:
+        """Removes all chunks that are not NuccChunkModel from the model list and model groups of this clump, based on the arguments.\n
+        If none_refs is True, will also remove "None" entries.\n
+        Returns the number of chunks removed, including duplicates.
+        """
+
+        org_count = len(self.model_chunks) + sum(list(map(lambda x: len(x.model_chunks), self.model_groups)))
+
+        if model_list:
+            self.model_chunks = [x for x in self.model_chunks if isinstance(
+                x, NuccChunkModel) or ((x is None) if (not none_refs) else False)]
+
+        if model_groups:
+            for group in self.model_groups:
+                group.model_chunks = [x for x in group.model_chunks if isinstance(
+                    x, NuccChunkModel) or ((x is None) if (not none_refs) else False)]
+
+        return org_count - (len(self.model_chunks) + sum(list(map(lambda x: len(x.model_chunks), self.model_groups))))
+
 
 class ClumpModelGroup:
     def __init__(self) -> None:
