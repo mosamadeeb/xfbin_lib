@@ -345,7 +345,8 @@ class NuccChunkModel(NuccChunk):
         self.clump_chunk = other.clump_chunk
 
         # TODO: Remove this check once NuccChunkModelHit is imported into blender
-        if other.hit_chunk:
+        # This prevents us from overwriting an existing hit chunk with a null chunk
+        if other.hit_chunk and not isinstance(other.hit_chunk, NuccChunkNull):
             self.hit_chunk = other.hit_chunk
 
         self.coord_chunk = other.coord_chunk
