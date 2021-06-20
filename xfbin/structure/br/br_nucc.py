@@ -312,7 +312,7 @@ class BrNuccChunkModel(BrNuccChunk):
 
         br.read_uint32()  # 0
         self.clumpIndex = br.read_uint32()
-        br.read_uint32()  # 0
+        self.hitIndex = br.read_uint32()
 
         # The mesh bone index might or might not be there. So instead, we look for the start of the NUD
         # to get its size, and then check to see if the "bone index" exists or not
@@ -374,7 +374,7 @@ class BrNuccChunkModel(BrNuccChunk):
 
         br.write_uint32(0)
         br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.clump_chunk))
-        br.write_uint32(0)
+        br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.hit_chunk))
 
         # Index of the mesh bone of this model in the clump
         # This might be shared by multiple models
@@ -501,6 +501,11 @@ class BrNuccChunkCoord(BrNuccChunk):
         br.write_float(node.scale)
         br.write_float(node.unkFloat)
         br.write_uint16(node.unkShort)
+
+
+class BrNuccChunkModelHit(BrNuccChunk):
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
 
 
 class BrNuccChunkBillboard(BrNuccChunk):

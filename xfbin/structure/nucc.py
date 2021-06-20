@@ -287,7 +287,7 @@ class CoordNode:
 
     def copy_from(self, other: 'CoordNode'):
         """Copies the contents of another node into this node without changing the parenting relations."""
-        
+
         self.position = other.position
         self.rotation = other.rotation
         self.scale = other.scale
@@ -309,6 +309,9 @@ class NuccChunkModel(NuccChunk):
 
         # Reference to the clump chunk of this page
         self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
+
+        # Reference to the ModelHit chunk of this model
+        self.hit_chunk = chunk_list[chunk_indices[br_chunk.hitIndex]]
 
         # This will be set later in the clump, using the index
         self.coord_chunk: Optional[NuccChunkCoord] = None
@@ -338,9 +341,16 @@ class NuccChunkModel(NuccChunk):
         self.rigging_flag = other.rigging_flag
         self.material_flags = other.material_flags
         self.flag1_floats = other.flag1_floats
+
         self.clump_chunk = other.clump_chunk
+
+        # TODO: Remove this check once NuccChunkModelHit is imported into blender
+        if other.hit_chunk:
+            self.hit_chunk = other.hit_chunk
+
         self.coord_chunk = other.coord_chunk
         self.coord_index = other.coord_index
+
         self.nud = other.nud
         self.material_chunks = other.material_chunks
 
@@ -401,6 +411,12 @@ class MaterialTextureGroup:
 
     def __iter__(self):
         return iter(self.texture_chunks)
+
+
+class NuccChunkModelHit(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkModelHit, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
+        self.extension = '.hit'
 
 
 class NuccChunkBillboard(NuccChunk):
