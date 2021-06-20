@@ -316,6 +316,25 @@ class NuccChunkModel(NuccChunk):
         for i in br_chunk.materialIndices:
             self.material_chunks.append(chunk_list[chunk_indices[i]])
 
+    def copy_from(self, other: 'NuccChunkModel'):
+        """Copies the contents of another chunk to this chunk (shallow copy).\n
+        Used for modifying a chunk without losing its original reference inside other chunks.
+        """
+
+        if hasattr(other, 'data'):
+            self.data = other.data
+
+        self.extension = other.extension
+
+        self.rigging_flag = other.rigging_flag
+        self.material_flags = other.material_flags
+        self.flag1_floats = other.flag1_floats
+        self.clump_chunk = other.clump_chunk
+        self.coord_chunk = other.coord_chunk
+        self.coord_index = other.coord_index
+        self.nud = other.nud
+        self.material_chunks = other.material_chunks
+
 
 class RiggingFlag(IntFlag):
     NULL = 0x0
