@@ -19,12 +19,14 @@ class Nud:
             self.mesh_groups.append(mesh_group)
 
     def get_bone_range(self) -> Tuple[int, int]:
-        if not (self.mesh_groups and self.mesh_groups[0].meshes and self.mesh_groups[0].meshes[0].bone_type != NudBoneType.NoBones):
+        if not (self.mesh_groups and
+                self.mesh_groups[0].meshes and
+                self.mesh_groups[0].meshes[0].bone_type != NudBoneType.NoBones):
             return (0, 0)
 
         lower = 0xFF_FF
         higher = 0
-        for mesh in self.mesh_groups[0].meshes:
+        for mesh in [m for m in self.mesh_groups[0].meshes if m.vertices and m.vertices[0].bone_ids]:
             lower = min(lower, min(chain(*map(lambda x: x.bone_ids, mesh.vertices))))
             higher = max(higher, max(chain(*map(lambda x: x.bone_ids, mesh.vertices))))
 
