@@ -101,17 +101,17 @@ class BrNuccChunkTexture(BrNuccChunk):
         # TODO: Actual NUT writing
         # Read the NUT data to get the width and height
         # This is needed for compatibility with the exporter, until full support is added
-        br_nut: BrNut = BinaryReader(self.nuccChunk.nut_data, Endian.BIG).read_struct(BrNut)
+        br_nut: BrNut = BinaryReader(self.nuccChunk.file_data, Endian.BIG).read_struct(BrNut)
 
         br.write_uint16(0)  # Placeholder values
         br.write_uint16(br_nut.textures[0].width if br_nut.textures else 0)
         br.write_uint16(br_nut.textures[0].height if br_nut.textures else 0)
         br.write_uint16(0)
 
-        nut_data_size = len(self.nuccChunk.nut_data)
+        nut_data_size = len(self.nuccChunk.file_data)
         br.write_uint32(nut_data_size)
 
-        br.extend(self.nuccChunk.nut_data)
+        br.extend(self.nuccChunk.file_data)
         br.seek(nut_data_size, Whence.CUR)
 
 
