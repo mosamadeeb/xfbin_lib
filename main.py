@@ -5,8 +5,13 @@ from argparse import ArgumentParser
 from xfbin import *
 from xfbin.structure.nucc import NuccChunk
 
+VERSION = 'v1.1'
+AUTHOR = 'SutandoTsukai181'
 
 def main():
+    print(f'xfbin_parser {VERSION}')
+    print(f'By {AUTHOR}\n')
+
     parser = ArgumentParser(
         description="""Extracts nuccChunks from CyberConnect2 XFBIN container files.""")
     parser.add_argument('input', nargs='?', action='store',
