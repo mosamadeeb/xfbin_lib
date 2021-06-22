@@ -31,6 +31,16 @@ class NuccChunk:
         self.chunks = [chunk_list[x]
                        for x in chunk_indices if not isinstance(chunk_list[x], (NuccChunkPage, NuccChunkIndex))]
 
+    def get_data(self, file_data_only: bool) -> bytearray:
+        """Returns the data of this chunk when it was first read from the XFBIN as a buffer.\n
+        If file_data_only is True, will return only the data contained in the formatted file of the chunk.
+        (NTP3 .nut for nuccChunkTexture, NDP3 .nud for nuccChunkModel)
+        """
+        if file_data_only and hasattr(self, 'file_data'):
+            return getattr(self, 'file_data')
+
+        return self.data
+
     @classmethod
     def get_nucc_type_from_str(cls, type_str: str) -> type:
         type_name = type_str[0].upper() + type_str[1:]
@@ -98,8 +108,8 @@ class NuccChunkTexture(NuccChunk):
         self.width = br_chunk.width
         self.height = br_chunk.width
 
-        # Placeholder until full Nut support is implemented
-        self.nut_data = br_chunk.nut_data
+        # Since Nut support has not been added yet, this will be written instead of the Nut object
+        self.file_data = br_chunk.nut_data
 
         # TODO: Implement Nut
         #self.nut = Nut(br_chunk.brNut)
@@ -318,6 +328,8 @@ class NuccChunkModel(NuccChunk):
 
         # This should be set again when creating a new instance, instead of getting it from the clump when writing
         self.coord_index = br_chunk.meshBoneIndex
+
+        self.file_data = br_chunk.nud_data
 
         # Create a Nud from the BrNud
         self.nud = Nud()

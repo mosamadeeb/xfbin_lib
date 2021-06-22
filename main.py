@@ -15,6 +15,8 @@ def main():
                         help='path to output folder to extract the chunks to (defaults to a new folder with the name of the input XFBIN)')
     parser.add_argument('-f', '--force-overwrite', dest='force_overwrite', action='store_true',
                         help='overwrite old extracted files without prompting')
+    parser.add_argument('-d', '--file-data-only', dest='file_data_only', action='store_true',
+                        help='when possible, write each chunk\'s file data only (NTP3 for .nut, NDP3 for .nud)')
     parser.add_argument('-s', '--sort-types', dest='sort_types', action='store_true',
                         help='sort nuccChunks by type instead of page')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -59,7 +61,7 @@ def main():
                 print(f'Writing {chunk_path} ...')
 
             with open(chunk_path, 'wb') as f:
-                f.write(c.data)
+                f.write(c.get_data(args.file_data_only))
 
     print("Done!")
 
