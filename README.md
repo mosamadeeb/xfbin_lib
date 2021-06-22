@@ -13,7 +13,7 @@ from xfbin_lib.xfbin import *
 # Script Usage
 
 ```
-usage: xfbin_parser.exe [-h] [-f] [-s] [-v] [input] [output]
+usage: xfbin_parser.exe [-h] [-f] [-d] [-s] [-v] [input] [output]
 
 Extracts nuccChunks from CyberConnect2 XFBIN container files.
 
@@ -26,6 +26,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -f, --force-overwrite
                         overwrite old extracted files without prompting
+  -d, --file-data-only  when possible, write each chunk's file data only (NTP3 for .nut, NDP3 for .nud)
   -s, --sort-types      sort nuccChunks by type instead of page
   -v, --verbose         print info about each extracted chunk
 ```
