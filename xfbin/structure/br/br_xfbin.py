@@ -101,6 +101,9 @@ class BrNuccHeader(BrStruct):
         self.magic = br.read_str(4)
 
         if self.magic != 'NUCC':
+            if self.magic == 'CPK ':
+                raise Exception('Invalid magic. XFBIN file is possibly CPK compressed.')
+
             raise Exception('Invalid magic.')
 
         self.nuccId = br.read_uint32()
