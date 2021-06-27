@@ -160,7 +160,14 @@ class NudVertex:
         self.bone_weights = br_vertex.boneWeights
 
     def __eq__(self, o: 'NudVertex') -> bool:
-        return self.position == o.position and self.normal == o.normal and self.color == o.color and self.uv == o.uv
+        return all(map(lambda x, y: x == y, self.position, o.position)) \
+            and all(map(lambda x, y: x == y, self.normal, o.normal)) \
+            and all(map(lambda x, y: all(map(lambda a, b: a == b, x, y)), self.uv, o.uv)) \
+            and all(map(lambda x, y: x == y, self.tangent, o.tangent)) \
+            and all(map(lambda x, y: x == y, self.bitangent, o.bitangent)) \
+            and all(map(lambda x, y: x == y, self.color, o.color)) \
+            and all(map(lambda x, y: x == y, self.bone_ids, o.bone_ids)) \
+            and all(map(lambda x, y: x == y, self.bone_weights, o.bone_weights))
 
     def __hash__(self) -> int:
         return hash(tuple(self.position)) ^ hash(tuple(self.normal)) ^ hash(tuple(self.color)) ^ hash(tuple(self.uv))
