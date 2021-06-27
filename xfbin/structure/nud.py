@@ -159,6 +159,12 @@ class NudVertex:
         self.bone_ids = br_vertex.boneIds
         self.bone_weights = br_vertex.boneWeights
 
+    def __eq__(self, o: 'NudVertex') -> bool:
+        return self.position == o.position and self.normal == o.normal and self.color == o.color and self.uv == o.uv
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.position)) ^ hash(tuple(self.normal)) ^ hash(tuple(self.color)) ^ hash(tuple(self.uv))
+
 
 class NudMaterial:
     def init_data(self, material: BrNudMaterial):
