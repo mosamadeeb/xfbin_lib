@@ -13,21 +13,22 @@ from xfbin_lib.xfbin import *
 # Script Usage
 
 ```
-usage: xfbin_parser.exe [-h] [-f] [-d] [-s] [-v] [input] [output]
+usage: xfbin_parser.exe [-h] [-f] [-d] [-s] [-j] [-v] [input] [output]
 
-Extracts nuccChunks from CyberConnect2 XFBIN container files.
+Unpacks/Repacks nuccChunks from CyberConnect2 XFBIN container files.
 
 positional arguments:
-  input                 path to input XFBIN file
+  input                 path to input XFBIN file OR path to folder to repack
   output                path to output folder to extract the chunks to (defaults to a new folder with the name of the
-                        input XFBIN)
+                        input XFBIN) OR path to output XFBIN file when repacking (defaults to folder name + ".xfbin")
 
 optional arguments:
   -h, --help            show this help message and exit
   -f, --force-overwrite
                         overwrite old extracted files without prompting
-  -d, --file-data-only  when possible, write each chunk's file data only (NTP3 for .nut, NDP3 for .nud)
-  -s, --sort-types      sort nuccChunks by type instead of page
+  -d, --file-data-only  when possible, write each chunk's file data only (NTP3 for .nut, NDP3 for .nud) (will disable repacking)
+  -s, --sort-types      sort nuccChunks by type instead of page (will disable repacking)
+  -j, --no-json         do not write "_page.json" for extracted pages (will disable repacking)
   -v, --verbose         print info about each extracted chunk
 ```
 
