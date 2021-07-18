@@ -198,11 +198,6 @@ class BrDynamics2(BrStruct):
             br.write_uint16(tup)
 
 
-class BrNuccChunkAnm(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
 class BrNuccChunkClump(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
@@ -494,33 +489,3 @@ class BrNuccChunkCoord(BrNuccChunk):
         br.write_float(node.scale)
         br.write_float(node.unkFloat)
         br.write_uint16(node.unkShort)
-
-
-class BrNuccChunkModelHit(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
-class BrNuccChunkBillboard(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
-class BrNuccChunkTrail(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
-class BrNuccChunkCamera(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
-class BrNuccChunkParticle(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)
-
-
-class BrNuccChunkBinary(BrNuccChunk):
-    def init_data(self, br: BinaryReader):
-        super().init_data(br)

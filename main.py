@@ -184,7 +184,7 @@ def main():
                         help='path to input XFBIN file OR path to folder to repack')
     parser.add_argument('output', nargs='?', action='store',
                         help='path to output folder to extract the chunks to (defaults to a new folder with the name of the input XFBIN) '
-                        'OR path to output XFBIN file when repacking (defaults to a folder name + ".xfbin")')
+                        'OR path to output XFBIN file when repacking (defaults to folder name + ".xfbin")')
     parser.add_argument('-f', '--force-overwrite', dest='force_overwrite', action='store_true',
                         help='overwrite old extracted files without prompting')
     parser.add_argument('-d', '--file-data-only', dest='file_data_only', action='store_true',

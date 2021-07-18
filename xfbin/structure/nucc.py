@@ -187,12 +187,6 @@ class Dynamics2:
         self.unk_short_tuples = list(sec2.unkShortTuples)
 
 
-class NuccChunkAnm(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkAnm, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.anm'
-
-
 class NuccChunkClump(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
@@ -458,39 +452,3 @@ class MaterialTextureGroup:
 
     def __iter__(self):
         return iter(self.texture_chunks)
-
-
-class NuccChunkModelHit(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkModelHit, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.hit'
-
-
-class NuccChunkBillboard(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.billboard'
-
-
-class NuccChunkTrail(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkTrail, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.trail'
-
-
-class NuccChunkCamera(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkCamera, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.cam'
-
-
-class NuccChunkParticle(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkParticle, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.particle'
-
-
-class NuccChunkBinary(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkBinary, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
-        super().init_data(br_chunk, chunk_list, chunk_indices, reference_indices)
-        self.extension = '.bin'
