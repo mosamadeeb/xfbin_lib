@@ -2,52 +2,26 @@ import json
 import os
 import shutil
 from argparse import ArgumentParser
+from xfbin.structure.xfbin import ChunkReference
 
 from xfbin import *
 from xfbin.structure.nucc import NuccChunk
 
-VERSION = 'v1.1'
+VERSION = 'v1.2'
 AUTHOR = 'SutandoTsukai181'
 
 
-def main():
-    print(f'xfbin_parser {VERSION}')
-    print(f'By {AUTHOR}\n')
-
-    parser = ArgumentParser(
-        description="""Extracts nuccChunks from CyberConnect2 XFBIN container files.""")
-    parser.add_argument('input', nargs='?', action='store',
-                        help='path to input XFBIN file')
-    parser.add_argument('output', nargs='?', action='store',
-                        help='path to output folder to extract the chunks to (defaults to a new folder with the name of the input XFBIN)')
-    parser.add_argument('-f', '--force-overwrite', dest='force_overwrite', action='store_true',
-                        help='overwrite old extracted files without prompting')
-    parser.add_argument('-d', '--file-data-only', dest='file_data_only', action='store_true',
-                        help='when possible, write each chunk\'s file data only (NTP3 for .nut, NDP3 for .nud) (will disable repacking)')
-    parser.add_argument('-s', '--sort-types', dest='sort_types', action='store_true',
-                        help='sort nuccChunks by type instead of page (will disable repacking)')
-    parser.add_argument('-j', '--no-json', dest='no_json', action='store_true',
-                        help='do not write "page.json" for extracted pages (will disable repacking)')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='print info about each extracted chunk')
-
-    args = parser.parse_args()
-
-    if not args.input:
-        print('No INPUT was given.\nAborting.')
-        os.system('pause')
-        return
-
+def unpack(args):
     if not args.output:
         args.output = os.path.basename(args.input).split('.')[0]
 
     args.output = os.path.abspath(args.output)
     if os.path.exists(args.output):
-        if (not args.force_overwrite) and input('Overwrite existing files? (Y/N)\n').lower() != 'y':
+        if (not args.force_overwrite) and input('Overwrite existing files? (Y/N) ').lower() != 'y':
             print('Aborting.')
             os.system('pause')
             return
-        print(f'Removing old directory: {args.output}')
+        print(f'Removing old directory: {args.output}\n')
         shutil.rmtree(args.output)
 
     os.mkdir(args.output)
@@ -91,15 +65,20 @@ def main():
                 args.output, f'[{i:03}] {main_chunk.name} ({NuccChunk.get_nucc_str_from_type(type(main_chunk))})')
             os.mkdir(page_path)
 
+            # Create the page json dict
             page_json = dict()
+
+            # Add chunks maps
             page_json['Chunk Maps'] = list(map(lambda x: x.to_dict(), page.initial_page_chunks))
 
+            # Add chunk references
             chunk_refs = page_json['Chunk References'] = [None] * len(page.chunk_references)
             for j, cr in enumerate(page.chunk_references):
                 d = chunk_refs[j] = dict()
                 d['Name'] = cr.name
                 d['Chunk'] = cr.chunk.to_dict()
 
+            # Add chunks
             chunks = page_json['Chunks'] = [None] * len(page.chunks)
             for j, c in enumerate(page.chunks):
                 d = chunks[j] = dict()
@@ -117,8 +96,123 @@ def main():
                     f.write(c.get_data(args.file_data_only))
 
             if not args.no_json:
-                with open(os.path.join(page_path, 'page.json'), 'w') as f:
+                with open(os.path.join(page_path, '_page.json'), 'w') as f:
                     json.dump(page_json, f, ensure_ascii=False, indent=4)
+
+    print(f'\nSuccessfully unpacked to "{args.output}"')
+
+
+def repack(args):
+    if not args.output:
+        args.output = os.path.basename(args.input) + '.xfbin'
+
+    args.output = os.path.abspath(args.output)
+    if os.path.exists(args.output):
+        if (not args.force_overwrite) and input('Overwrite existing XFBIN? (Y/N) ').lower() != 'y':
+            print('Aborting.')
+            os.system('pause')
+            return
+        print(f'Removing old XFBIN: {args.output}\n')
+        os.remove(args.output)
+
+    # Create the directory in case some path components do not exist
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+
+    xfbin = Xfbin()
+
+    for root, directories, files in os.walk(args.input):
+        for d in directories:
+            page_json_path = os.path.join(root, d, '_page.json')
+            if not os.path.isfile(page_json_path):
+                print(f'Directory "{d}"" does not have a "_page.json" and will be skipped.')
+                continue
+
+            with open(page_json_path, 'r') as f:
+                page_json = json.load(f)
+
+            # Enclose everything in a try block to avoid having to check if each json element exists or not
+            try:
+                page = Page()
+                xfbin.pages.append(page)
+
+                # Read chunk maps
+                chunk_maps = list(map(lambda c: NuccChunk.create_from_nucc_type(
+                    c['Type'], c['Path'], c['Name']), page_json['Chunk Maps']))
+
+                # Read chunk references
+                chunk_refs = page.chunk_references = [None] * len(page_json['Chunk References'])
+                for i, ref in enumerate(page_json['Chunk References']):
+                    c = ref['Chunk']
+                    chunk_refs[i] = ChunkReference(
+                        ref['Name'], NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name']))
+
+                # Read chunks
+                chunks = page.chunks = list()
+                for ch in page_json['Chunks']:
+                    c = ch['Chunk']
+                    chunk = NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name'])
+                    chunk_path = os.path.join(root, d, ch['File Name'])
+
+                    if not os.path.isfile(chunk_path):
+                        print(f'Chunk "{chunk_path}" does not exist and will be skipped.')
+                        continue
+
+                    chunks.append(chunk)
+
+                    if args.verbose:
+                        print(f'Reading {chunk_path} ...')
+
+                    with open(chunk_path, 'rb') as f:
+                        chunk.set_data(bytearray(f.read()), chunk_maps)
+            except:
+                print(f'"_page.json" of directory "{d}" is invalid and will be skipped.')
+
+        # We only want to look in the topmost directory
+        break
+
+    write_xfbin_to_path(xfbin, args.output)
+    print(f'\nSuccessfully repacked to "{args.output}"')
+
+
+def main():
+    print(f'xfbin_parser {VERSION}')
+    print(f'By {AUTHOR}\n')
+
+    parser = ArgumentParser(
+        description="""Unpacks/Repacks nuccChunks from CyberConnect2 XFBIN container files.""")
+    parser.add_argument('input', nargs='?', action='store',
+                        help='path to input XFBIN file OR path to folder to repack')
+    parser.add_argument('output', nargs='?', action='store',
+                        help='path to output folder to extract the chunks to (defaults to a new folder with the name of the input XFBIN) '
+                        'OR path to output XFBIN file when repacking (defaults to a folder name + ".xfbin")')
+    parser.add_argument('-f', '--force-overwrite', dest='force_overwrite', action='store_true',
+                        help='overwrite old extracted files without prompting')
+    parser.add_argument('-d', '--file-data-only', dest='file_data_only', action='store_true',
+                        help='when possible, write each chunk\'s file data only (NTP3 for .nut, NDP3 for .nud) (will disable repacking)')
+    parser.add_argument('-s', '--sort-types', dest='sort_types', action='store_true',
+                        help='sort nuccChunks by type instead of page (will disable repacking)')
+    parser.add_argument('-j', '--no-json', dest='no_json', action='store_true',
+                        help='do not write "_page.json" for extracted pages (will disable repacking)')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='print info about each extracted chunk')
+
+    args = parser.parse_args()
+
+    if not args.input:
+        print('No INPUT was given.\nAborting.')
+        os.system('pause')
+        return
+
+    if os.path.isfile(args.input):
+        print('INPUT is a file - Attempting to unpack...')
+        unpack(args)
+    elif os.path.isdir(args.input):
+        print('INPUT is a folder - Attempting to repack...')
+        repack(args)
+    else:
+        print('INPUT path does not exist.\nAborting.')
+        os.system('pause')
+        return
 
     print("Done!")
 
