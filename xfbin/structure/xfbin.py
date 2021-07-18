@@ -12,6 +12,10 @@ class ChunkReference:
 
 
 class Page:
+    # Only updated/used when the XFBIN is read for the first time
+    # Used for writing the page's JSON to be used when repacking
+    initial_page_chunks: List[NuccChunk]
+    
     def __init__(self):
         self.chunks: List[NuccChunk] = list()
         self.chunk_references: List[ChunkReference] = list()
@@ -28,6 +32,10 @@ class Page:
     def clear(self):
         """Clears the Chunks list of this Page by removing every chunk."""
         self.chunks.clear()
+
+    def cleanup(self):
+        """Removes the NuccChunkNull and NuccChunkPage in this page, if they exist."""
+        self.chunks = [c for c in self.chunks if not isinstance(c, (NuccChunkNull, NuccChunkPage))]
 
     def add_chunk(self, chunk: NuccChunk):
         """Adds the given NuccChunk to this Page.\n
