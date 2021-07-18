@@ -350,12 +350,12 @@ class BrPage(BrStruct):
                 continue
 
             br_nucc_chunk: BrNuccChunk
-            if nucc_chunk.has_props:
-                # Create a new BrNuccChunk from the NuccChunk's type,
-                # or create an abstract BrNuccChunk to write the data only if the NuccChunk does not have properties to be processed
-                br_nucc_chunk = BrNuccChunk.get_br_nucc_type_from_str(type(nucc_chunk).__qualname__)() \
-                    if nucc_chunk.has_props \
-                    else BrNuccChunk()
+
+            # Create a new BrNuccChunk from the NuccChunk's type,
+            # or create an abstract BrNuccChunk to write the data only if the NuccChunk does not have properties to be processed
+            br_nucc_chunk = BrNuccChunk.get_br_nucc_type_from_str(type(nucc_chunk).__qualname__)() \
+                if nucc_chunk.has_props \
+                else BrNuccChunk()
 
             br_nucc_chunk.nuccChunk = nucc_chunk
 

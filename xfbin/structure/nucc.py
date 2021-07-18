@@ -29,7 +29,7 @@ class NuccChunk:
         self.data = data
         self.has_data = True
 
-        self.chunks = chunks
+        self.chunks = [c for c in chunks if not isinstance(c, (NuccChunkPage, NuccChunkIndex))]
 
     def init_data(self, br_chunk: BrNuccChunk, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         """Initializes the data of this `NuccChunk` from a `BrNuccChunk`, using a chunk list and a list of
