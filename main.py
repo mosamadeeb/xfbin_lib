@@ -7,7 +7,7 @@ from xfbin.structure.xfbin import ChunkReference
 from xfbin import *
 from xfbin.structure.nucc import NuccChunk
 
-VERSION = 'v1.2.1'
+VERSION = 'v1.2.2'
 AUTHOR = 'SutandoTsukai181'
 
 
@@ -96,7 +96,7 @@ def unpack(args):
                     f.write(c.get_data(args.file_data_only))
 
             if not args.no_json:
-                with open(os.path.join(page_path, '_page.json'), 'w') as f:
+                with open(os.path.join(page_path, '_page.json'), 'w', encoding='cp932') as f:
                     json.dump(page_json, f, ensure_ascii=False, indent=4)
 
     print(f'\nSuccessfully unpacked to "{args.output}"')
@@ -127,7 +127,7 @@ def repack(args):
                 print(f'Directory "{d}"" does not have a "_page.json" and will be skipped.')
                 continue
 
-            with open(page_json_path, 'r') as f:
+            with open(page_json_path, 'r', encoding='cp932') as f:
                 page_json = json.load(f)
 
             # Enclose everything in a try block to avoid having to check if each json element exists or not
