@@ -7,7 +7,7 @@ from xfbin.structure.xfbin import ChunkReference
 from xfbin import *
 from xfbin.structure.nucc import NuccChunk
 
-VERSION = 'v1.2'
+VERSION = 'v1.2.1'
 AUTHOR = 'SutandoTsukai181'
 
 

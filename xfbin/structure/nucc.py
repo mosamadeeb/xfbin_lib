@@ -24,6 +24,7 @@ class NuccChunk:
 
         self.has_data = False
         self.has_props = False
+        self.chunks = list()
 
     def set_data(self, data: bytearray, chunks):
         self.data = data
@@ -104,18 +105,21 @@ class NuccChunkNull(NuccChunk):
     # Empty
     def __init__(self, file_path='', name=''):
         super().__init__(file_path, name)
+        self.has_props = True
 
 
 class NuccChunkPage(NuccChunk):
     # Should not be used as a NuccChunk, except when writing
     def __init__(self, file_path='', name='Page0'):
         super().__init__(file_path, name)
+        self.has_props = True
 
 
 class NuccChunkIndex(NuccChunk):
     # Does not exist
     def __init__(self, file_path='', name='index'):
         super().__init__(file_path, name)
+        self.has_props = True
 
 
 class NuccChunkTexture(NuccChunk):
