@@ -36,7 +36,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
 
         # Create ChunkReferences and add them to the page's list
         page.chunk_references = list(map(lambda x: ChunkReference(
-            table.chunkNames[x.chunkNameIndex], chunks[x.chunkNameIndex]), br_page.pageChunkReferences))
+            table.chunkNames[x.chunkNameIndex], chunks[x.chunkMapIndex]), br_page.pageChunkReferences))
 
         for index in br_page.chunksDict:
             # Get the NuccChunk corresponding to the current BrNuccChunk
