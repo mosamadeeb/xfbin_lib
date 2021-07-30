@@ -1,4 +1,5 @@
 from ...util import *
+from .br_anm import *
 from .br_nud import *
 from .br_nut import *
 
@@ -489,3 +490,24 @@ class BrNuccChunkCoord(BrNuccChunk):
         br.write_float(node.scale)
         br.write_float(node.unkFloat)
         br.write_uint16(node.unkShort)
+
+
+class BrNuccChunkAnm(BrNuccChunk):
+    def init_data(self, br: BinaryReader):
+        super().init_data(br)
+
+        self.anm_length = br.read_uint32()
+        self.frame_size = br.read_uint32()  # Usually 100 (0x64)
+
+        self.entry_count = br.read_uint16()
+        self.unk1_count = br.read_uint16()
+        self.clump_count = br.read_uint16()
+        self.other_entry_count = br.read_uint16()  # Other entries have a clump index of -1
+
+        self.coord_count = br.read_uint32()
+
+        self.clumps = br.read_struct(BrAnmClump, self.clump_count)
+        self.other_entry_indices = br.read_uint32(self.other_entry_count)  # Chunk indices for Camera, LightDirc, etc
+        self.coord_parents = br.read_struct(BrAnmCoordParent, self.coord_count)
+
+        self.entries = br.read_struct(BrAnmEntry, self.entry_count)
