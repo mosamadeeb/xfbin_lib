@@ -137,7 +137,7 @@ class BrChunkTable(BrStruct):
     chunkReferences: List[ChunkReference]
 
     # Contains the combined page indices
-    chunkMapIndices: List[NuccChunk]
+    chunkMapIndices: List[int]
 
     def __br_read__(self, br: BinaryReader):
         self.chunkTypeCount = br.read_uint32()
@@ -332,7 +332,7 @@ class BrPage(BrStruct):
 
                 # Store the reference indices of this page from the chunk table for later use
                 self.pageChunkReferences = br_xfbin.chunkTable.chunkMapReferences[
-                    br_xfbin.curReferenceStart: br_xfbin.curReferenceStart + chunk.referenceSize]
+                    br_xfbin.curReferenceStart: br_xfbin.curReferenceStart + self.pageChunk.referenceSize]
 
                 break
 
