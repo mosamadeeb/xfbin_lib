@@ -170,8 +170,8 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
                                        range(len(curve_values)), curve_values))
 
         elif curve_format == AnmCurveFormat.SHORT1:
-            curve.keyframes = list(map(lambda i, v: AnmKeyframe(frame_size * i, v / 0x8000),
-                                       range(len(curve_values)), curve_values))
+            curve.keyframes = list(map(lambda i, v: AnmKeyframe(
+                frame_size * i, tuple(map(lambda x: x / 0x8000, v))), range(len(curve_values)), curve_values))
 
     elif data_path == AnmDataPath.CAMERA:
         if curve_format == AnmCurveFormat.INT1_FLOAT1:

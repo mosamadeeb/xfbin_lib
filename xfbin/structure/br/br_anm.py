@@ -88,7 +88,7 @@ class BrAnmEntry(BrStruct):
 
             elif header.curve_format == AnmCurveFormat.FLOAT1:  # 0x0B
                 for i in range(header.keyframe_count):
-                    curve[i] = br.read_float()
+                    curve[i] = br.read_float(1)
 
             elif header.curve_format == AnmCurveFormat.INT1_FLOAT1:  # 0x0C
                 for i in range(header.keyframe_count):
@@ -96,7 +96,7 @@ class BrAnmEntry(BrStruct):
 
             elif header.curve_format == AnmCurveFormat.SHORT1:  # 0x0F
                 for i in range(header.keyframe_count):
-                    curve[i] = br.read_int16()
+                    curve[i] = br.read_int16(1)
 
             elif header.curve_format == AnmCurveFormat.SHORT3:  # 0x10
                 for i in range(header.keyframe_count):
@@ -116,7 +116,7 @@ class BrAnmEntry(BrStruct):
 
             elif header.curve_format == AnmCurveFormat.FLOAT1ALT:  # 0x16
                 for i in range(header.keyframe_count):
-                    curve[i] = br.read_float()
+                    curve[i] = br.read_float(1)
 
             else:
                 raise Exception('nuccChunkAnm: Unsupported curve format')

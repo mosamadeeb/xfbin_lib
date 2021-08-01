@@ -486,7 +486,7 @@ class NuccChunkAnm(NuccChunk):
         other_entry_chunks = list(map(lambda x: chunk_list[chunk_indices[x]], br_chunk.other_entry_indices))
 
         # Set up the animation entries/bones
-        self.entries = [None] * len(br_chunk.entries)
+        self.entries: List[AnmEntry] = [None] * len(br_chunk.entries)
         for i, br_entry in enumerate(br_chunk.entries):
             entry = self.entries[i] = AnmEntry()
             entry.init_data(br_entry, self.frame_size, self.clumps, other_entry_chunks)
