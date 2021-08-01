@@ -189,3 +189,5 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
     if len(curve.keyframes) and curve.keyframes[-1].frame == -1:
         # Remove the last keyframe (with frame -1) until we're sure of its usage
         curve.keyframes.pop()
+
+    return curve
