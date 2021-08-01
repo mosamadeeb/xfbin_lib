@@ -108,15 +108,18 @@ class AnmEntry:
         # Sort the curves based on curve index (might not actually be necessary)
         curves = sorted(zip(br_anm_entry.curve_headers, br_anm_entry.curves), key=lambda x: x[0].curve_index)
 
+        self.curves = list()
         if self.entry_format == AnmEntryFormat.BONE:
             for i, cur in enumerate(('location', 'rotation', 'scale', 'toggled')):
-                setattr(self, f'{cur}_curve', create_anm_curve(
-                    AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None)
+                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None
+                self.curves.append(curve)
+                setattr(self, f'{cur}_curve', curve)
 
         elif self.entry_format == AnmEntryFormat.CAMERA:
             for i, cur in enumerate(('location', 'rotation', 'camera')):
-                setattr(self, f'{cur}_curve', create_anm_curve(
-                    AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None)
+                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None
+                self.curves.append(curve)
+                setattr(self, f'{cur}_curve', curve)
 
         else:
             self.curves = list(map(lambda c: create_anm_curve(
