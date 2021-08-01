@@ -44,6 +44,7 @@ class AnmCurveFormat(IntEnum):
     BYTE3 = 0x14  # lightdirc
     FLOAT3ALT2 = 0x15  # scale
     FLOAT1ALT = 0x16  # lightdirc
+    FLOAT1ALT2 = 0x18  # material
 
 
 class BrAnmCurveHeader(BrStruct):
@@ -115,6 +116,10 @@ class BrAnmEntry(BrStruct):
                     curve[i] = br.read_float(3)
 
             elif header.curve_format == AnmCurveFormat.FLOAT1ALT:  # 0x16
+                for i in range(header.keyframe_count):
+                    curve[i] = br.read_float(1)
+
+            elif header.curve_format == AnmCurveFormat.FLOAT1ALT2:  # 0x18
                 for i in range(header.keyframe_count):
                     curve[i] = br.read_float(1)
 
