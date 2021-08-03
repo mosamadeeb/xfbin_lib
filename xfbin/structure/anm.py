@@ -111,13 +111,15 @@ class AnmEntry:
         self.curves = list()
         if self.entry_format == AnmEntryFormat.BONE:
             for i, cur in enumerate(('location', 'rotation', 'scale', 'toggled')):
-                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None
+                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format,
+                                         curves[i][1], frame_size) if i < len(curves) else None
                 self.curves.append(curve)
                 setattr(self, f'{cur}_curve', curve)
 
         elif self.entry_format == AnmEntryFormat.CAMERA:
             for i, cur in enumerate(('location', 'rotation', 'camera')):
-                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format, curves[i][1], frame_size) if i < len(curves) else None
+                curve = create_anm_curve(AnmDataPath[cur.upper()], curves[i][0].curve_format,
+                                         curves[i][1], frame_size) if i < len(curves) else None
                 self.curves.append(curve)
                 setattr(self, f'{cur}_curve', curve)
 
@@ -132,7 +134,7 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
     curve.keyframes = None
 
     if data_path == AnmDataPath.LOCATION:
-        if curve_format == AnmCurveFormat.FLOAT3:
+        if AnmCurveFormat(curve_format).name.startswith('FLOAT3'):
             curve.keyframes = list(map(lambda i, v: AnmKeyframe(frame_size * i, v),
                                        range(len(curve_values)), curve_values))
 
@@ -141,7 +143,7 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
 
     # Treat euler/quaternion as one, but set the correct data path according to the format
     if data_path == AnmDataPath.ROTATION:
-        if curve_format == AnmCurveFormat.FLOAT3ALT:
+        if AnmCurveFormat(curve_format).name.startswith('FLOAT3'):
             curve.data_path = AnmDataPath.ROTATION_EULER
             curve.keyframes = list(map(lambda i, v: AnmKeyframe(frame_size * i, v),
                                        range(len(curve_values)), curve_values))
@@ -156,7 +158,7 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
                 frame_size * i, tuple(map(lambda x: x / 0x4000, v))), range(len(curve_values)), curve_values))
 
     elif data_path == AnmDataPath.SCALE:
-        if curve_format in (AnmCurveFormat.FLOAT3, AnmCurveFormat.FLOAT3ALT2):
+        if AnmCurveFormat(curve_format).name.startswith('FLOAT3'):
             curve.keyframes = list(map(lambda i, v: AnmKeyframe(frame_size * i, v),
                                        range(len(curve_values)), curve_values))
 
@@ -184,7 +186,8 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
         curve.keyframes = list(map(lambda i, v: AnmKeyframe(frame_size * i, v), range(len(curve_values)), curve_values))
 
     if curve.keyframes is None:
-        raise Exception(f'nuccChunkAnm: Unexpected curve format ({curve_format}) for curve with data path {data_path}')
+        raise Exception(
+            f'nuccChunkAnm: Unexpected curve format ({AnmCurveFormat(curve_format).name}) for curve with data path {AnmDataPath(data_path).name}')
 
     if len(curve.keyframes) and curve.keyframes[-1].frame == -1:
         # Remove the last keyframe (with frame -1) until we're sure of its usage
