@@ -64,7 +64,7 @@ class AnmDataPath(IntEnum):
     UNKNOWN = -1
 
     LOCATION = 0
-    ROTATION = 1
+    ROTATION = -2
     ROTATION_EULER = 1
     ROTATION_QUATERNION = 2
     SCALE = 3
