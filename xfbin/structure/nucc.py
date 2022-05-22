@@ -477,6 +477,9 @@ class NuccChunkAnm(NuccChunk):
 
         # Set up the child-parent relations in AnmBones
         for p in br_chunk.coord_parents:
+            if -1 in [p.parent_clump_index, p.parent_coord_index, p.child_clump_index, p.child_coord_index]:
+                continue
+            
             p: BrAnmCoordParent
             parent = self.clumps[p.parent_clump_index].bones[p.parent_coord_index]
             child = self.clumps[p.child_clump_index].bones[p.child_coord_index]
