@@ -339,6 +339,12 @@ class BrPage(BrStruct):
     def __br_write__(self, br: 'BinaryReader', page: Page):
         self.chunkIndexDict = IterativeDict()
 
+        # Force updating the chunk index dict before processing any of the chunks
+        # (needed to avoid breaking nuccChunkParticle pages)
+        no_props_chunks = [c for c in page if not c.has_props]
+        if no_props_chunks:
+            self.chunkIndexDict.update_or_next(no_props_chunks[0].chunks)
+
         # Write the null chunk
         null_chunk = BrNuccChunkNull()
         null_chunk.nuccChunk = NuccChunkNull()
@@ -349,8 +355,14 @@ class BrPage(BrStruct):
             if isinstance(nucc_chunk, (NuccChunkNull, NuccChunkPage)):
                 continue
 
-            # Create a new BrNuccChunk from the NuccChunk's type
-            br_nucc_chunk: BrNuccChunk = BrNuccChunk.get_br_nucc_type_from_str(type(nucc_chunk).__qualname__)()
+            br_nucc_chunk: BrNuccChunk
+
+            # Create a new BrNuccChunk from the NuccChunk's type,
+            # or create an abstract BrNuccChunk to write the data only if the NuccChunk does not have properties to be processed
+            br_nucc_chunk = BrNuccChunk.get_br_nucc_type_from_str(type(nucc_chunk).__qualname__)() \
+                if nucc_chunk.has_props \
+                else BrNuccChunk()
+
             br_nucc_chunk.nuccChunk = nucc_chunk
 
             # Write the BrNuccChunk

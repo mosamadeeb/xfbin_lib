@@ -149,46 +149,56 @@ class NuccChunkTexture(NuccChunk):
 class NuccChunkDynamics(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
-        self.has_data = True
-        self.has_props = True
-
+        self.extension = '.dynamics'
+        
+        self.SPGroupCount = br_chunk.SPGroupCount
+        self.ColSphereCount = br_chunk.ColSphereCount
         self.clump_chunk: NuccChunkClump = chunk_list[chunk_indices[br_chunk.clumpChunkIndex]]
-
         # Make an iterator to give each Dynamics1 entry its own values
         sec1_shorts = iter(br_chunk.section1Shorts)
 
-        self.section1: List[Dynamics1] = list()
-        for sec1 in br_chunk.section1:
+        self.SPGroup: List[Dynamics1] = list()
+        for sec1 in br_chunk.SPGroup:
             d = Dynamics1()
             d.init_data(sec1, sec1_shorts)
-            self.section1.append(d)
+            self.SPGroup.append(d)
 
-        self.section2: List[Dynamics2] = list()
-        for sec2 in br_chunk.section2:
+        self.ColSphere: List[Dynamics2] = list()
+        for sec2 in br_chunk.ColSphere:
             d = Dynamics2()
             d.init_data(sec2)
-            self.section2.append(d)
+            self.ColSphere.append(d)
 
 
 class Dynamics1:
     def init_data(self, sec1: BrDynamics1, sec1_shorts: Iterator):
-        self.floats = sec1.floats
+        self.Bounciness = sec1.Bounciness
+        self.Elasticity = sec1.Elasticity
+        self.Stiffness = sec1.Stiffness
+        self.Movement = sec1.Movement
         self.coord_index = sec1.coordIndex
+        self.BonesCount = sec1.BonesCount
 
         self.shorts = list()
-        for _ in range(sec1.unkCount):
+        for _ in range(sec1.BonesCount):
             self.shorts.append(next(sec1_shorts))
-
+        
 
 class Dynamics2:
     def init_data(self, sec2: BrDynamics2):
-        self.floats = sec2.floats
+        self.offset_z = sec2.offset_z
+        self.offset_y = sec2.offset_y
+        self.offset_x = sec2.offset_x
+        self.scale_z = sec2.scale_z
+        self.scale_y = sec2.scale_y
+        self.scale_x = sec2.scale_x
         self.coord_index = sec2.coordIndex
-
+        self.attach_groups = sec2.boolflag
         # Should always be -1, but let's store it just in case
         self.negative_unk = sec2.negativeUnk
 
-        self.unk_short_tuples = list(sec2.unkShortTuples)
+        self.attached_groups_count = sec2.attached_groups_count
+        self.attached_groups = sec2.attached_groups
 
 
 class NuccChunkClump(NuccChunk):
@@ -404,7 +414,7 @@ class RiggingFlag(IntFlag):
 
     UNSKINNED = 0x01  # Storm eyes and JoJo teeth
     SKINNED = 0x02  # JoJo eyes
-    BODY = 0x04
+    OUTLINE = 0x04
 
     TEETH = 0x05  # Storm teeth
     FULL = 0x06  # Body and tongue

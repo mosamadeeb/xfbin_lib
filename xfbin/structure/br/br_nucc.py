@@ -119,34 +119,35 @@ class BrNuccChunkDynamics(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
 
-        self.section1Count = br.read_uint16()
-        self.section2Count = br.read_uint16()
+        self.SPGroupCount = br.read_uint16()
+        self.ColSphereCount = br.read_uint16()
 
         # Chunk index of the clump of this model, but relative to this page
         self.clumpChunkIndex = br.read_uint32()
 
-        self.section1 = br.read_struct(BrDynamics1, self.section1Count)
-        self.section2 = br.read_struct(BrDynamics2, self.section2Count)
+        self.SPGroup = br.read_struct(BrDynamics1, self.SPGroupCount)
+        self.ColSphere = br.read_struct(BrDynamics2, self.ColSphereCount)
 
         # Read all shorts as a single tuple for now
-        self.section1Shorts = br.read_uint16(sum(map(lambda x: x.unkCount, self.section1)))
+        self.section1Shorts = br.read_uint16(sum(map(lambda x: x.BonesCount, self.SPGroup)))
+        #print(self.section1Shorts)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         chunk = self.nuccChunk
 
-        br.write_uint16(len(chunk.section1))
-        br.write_uint16(len(chunk.section2))
+        br.write_uint16(chunk.SPGroupCount)
+        br.write_uint16(chunk.ColSphereCount)
 
         br.write_uint32(chunkIndexDict.get_or_next(chunk.clump_chunk))
 
         # Write the section 1 shorts while iterating over it
         br_sec1_shorts = BinaryReader(endianness=Endian.BIG)
 
-        for sec1 in chunk.section1:
+        for sec1 in chunk.SPGroup:
             br.write_struct(BrDynamics1(), sec1)
             br_sec1_shorts.write_uint16(sec1.shorts)
 
-        for sec2 in chunk.section2:
+        for sec2 in chunk.ColSphere:
             br.write_struct(BrDynamics2(), sec2)
 
         br.extend(br_sec1_shorts.buffer())
@@ -156,14 +157,20 @@ class BrNuccChunkDynamics(BrNuccChunk):
 # Placeholder names for now
 class BrDynamics1(BrStruct):
     def __br_read__(self, br: 'BinaryReader'):
-        self.floats = br.read_float(4)
+        self.Bounciness = br.read_float()
+        self.Elasticity = br.read_float()
+        self.Stiffness = br.read_float()
+        self.Movement = br.read_float()
 
         # Coord index in the clump's coord indices
         self.coordIndex = br.read_uint16()
-        self.unkCount = br.read_uint16()
+        self.BonesCount = br.read_uint16()
 
     def __br_write__(self, br: 'BinaryReader', sec1: 'Dynamics1'):
-        br.write_float(sec1.floats)
+        br.write_float(sec1.Bounciness)
+        br.write_float(sec1.Elasticity)
+        br.write_float(sec1.Stiffness)
+        br.write_float(sec1.Movement)
 
         br.write_uint16(sec1.coord_index)
         br.write_uint16(len(sec1.shorts))
@@ -171,31 +178,44 @@ class BrDynamics1(BrStruct):
 
 class BrDynamics2(BrStruct):
     def __br_read__(self, br: 'BinaryReader'):
-        self.floats = br.read_float(6)
+        self.offset_z = br.read_float()
+        self.offset_y = br.read_float()
+        self.offset_x = br.read_float()
+        self.scale_z = br.read_float()
+        self.scale_y = br.read_float()
+        self.scale_x = br.read_float()
 
         self.coordIndex = br.read_uint16()
-        self.unkCount = br.read_uint16()
+        self.boolflag = br.read_uint16()
 
         self.negativeUnk = br.read_int16()
         br.read_uint16()
 
-        self.unkShortTuples = list()
-        for _ in range(self.unkCount):
-            # Each entry contains the count, and the values. They're all 16-bit ints
-            self.unkShortTuples.append(br.read_uint16(br.read_uint16()))
+        self.attached_groups_count = 0
+        self.attached_groups = 0
+
+        self.attached_groups = list()
+        if self.boolflag == 1:
+            self.attached_groups_count = br.read_uint16()
+            self.attached_groups = br.read_uint16(self.attached_groups_count)
 
     def __br_write__(self, br: 'BinaryReader', sec2: 'Dynamics2'):
-        br.write_float(sec2.floats)
+        br.write_float(sec2.offset_z)
+        br.write_float(sec2.offset_y)
+        br.write_float(sec2.offset_x)
+        br.write_float(sec2.scale_z)
+        br.write_float(sec2.scale_y)
+        br.write_float(sec2.scale_x)
 
         br.write_uint16(sec2.coord_index)
-        br.write_uint16(len(sec2.unk_short_tuples))
-
+        br.write_uint16(sec2.attach_groups)
         br.write_int16(sec2.negative_unk)
         br.write_uint16(0)
 
-        for tup in sec2.unk_short_tuples:
-            br.write_uint16(len(tup))
-            br.write_uint16(tup)
+        if sec2.attach_groups == 1:
+            br.write_uint16(sec2.attached_groups_count)
+            for g in sec2.attached_groups:
+                br.write_uint16(g)
 
 
 class BrNuccChunkClump(BrNuccChunk):
