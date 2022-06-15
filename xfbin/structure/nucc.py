@@ -139,11 +139,22 @@ class NuccChunkTexture(NuccChunk):
         self.width = br_chunk.width
         self.height = br_chunk.width
 
+
         # Since Nut support has not been added yet, this will be written instead of the Nut object
         self.file_data = br_chunk.nut_data
 
-        # TODO: Implement Nut
-        #self.nut = Nut(br_chunk.brNut)
+
+        self.nut = Nut()
+        self.nut.init_data(br_chunk.brNut)
+ 
+
+class Nut:
+     def init_data(self, br_chunk: BrNut):
+         self.magic =  br_chunk.magic
+         self.version = br_chunk.version
+
+         self.texture_count = br_chunk.texture_count
+         self.textures = br_chunk.textures
 
 
 class NuccChunkDynamics(NuccChunk):
