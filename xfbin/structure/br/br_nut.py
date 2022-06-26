@@ -12,56 +12,57 @@ class BrNut(BrStruct):
 
         self.version = br.read_uint16()
 
-        self.textureCount = br.read_uint16()
+        self.texture_count = br.read_uint16()
 
         br.read_uint32(2)
 
-        self.textures = br.read_struct(BrNutTexture, self.textureCount, self)
+        self.textures = br.read_struct(BrNutTexture, self.texture_count, self)
 
 
 class BrNutTexture(BrStruct):
     def __br_read__(self, br: BinaryReader, nut: BrNut) -> None:
-        self.totalSize = br.read_uint32()
+        self.total_size = br.read_uint32()
         br.read_uint32()
 
-        self.dataSize = br.read_uint32()
-        self.headerSize = br.read_uint16()
+        self.data_size = br.read_uint32()
+        self.header_size = br.read_uint16()
         br.read_uint16()
 
         br.read_uint8()
-        self.mipmapCount = br.read_uint8()
+        self.mipmap_count = br.read_uint8()
         br.read_uint8()
-        self.pixelFormat = br.read_uint8()
+        self.pixel_format = br.read_uint8()
 
         self.width = br.read_uint16()
         self.height = br.read_uint16()
 
         br.read_uint32()
-        self.cubeMapFormat = br.read_uint32()
+        self.cubemap_format = br.read_uint32()
 
-        self.isCubemap = False
-        if self.cubeMapFormat & 0x200:
-            self.isCubemap = True
+        self.is_cube_map = False
+        if self.cubemap_format & 0x200:
+            self.is_cube_map = True
 
         if nut.version < 0x200:
-            self.dataOffset = 0x10 + self.headerSize
+            self.data_offset = 0x10 + self.header_size
             br.read_uint32(4)
         else:
-            self.dataOffset = br.read_uint32(4)[0]
+            self.data_offset = br.read_uint32(4)[0]
 
-        if self.isCubemap:
-            (self.cubemapSize1, self.cubemapSize2, _, _) = br.read_uint32(4)
+        if self.is_cube_map:
+            (self.cubemap_size1, self.cubemap_size2, _, _) = br.read_uint32(4)
 
-        if self.mipmapCount > 1:
-            self.mipmapSizes = br.read_uint32(self.mipmapCount)
+        if self.mipmap_count > 1:
+            self.mipmap_sizes = br.read_uint32(self.mipmap_count)
             br.align_pos(0x10)
 
         # eXt and GIDX
         br.seek(0x18, Whence.CUR)
 
         # Probably always 0 in xfbins
-        self.hashId = br.read_uint32()
+        self.hash_id = br.read_uint32()
         br.read_uint32()
 
         # TODO: Read individual mipmaps/cubemap faces
-        self.textureData = self.dataSize
+        
+        self.texture_data = br.read_bytes(self.data_size)
