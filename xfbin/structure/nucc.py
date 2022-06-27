@@ -197,12 +197,12 @@ class Dynamics1:
 
 class Dynamics2:
     def init_data(self, sec2: BrDynamics2):
-        self.offset_z = sec2.offset_z
-        self.offset_y = sec2.offset_y
         self.offset_x = sec2.offset_x
-        self.scale_z = sec2.scale_z
-        self.scale_y = sec2.scale_y
+        self.offset_y = sec2.offset_y
+        self.offset_z = sec2.offset_z
         self.scale_x = sec2.scale_x
+        self.scale_y = sec2.scale_y
+        self.scale_z = sec2.scale_z
         self.coord_index = sec2.coordIndex
         self.attach_groups = sec2.boolflag
         # Should always be -1, but let's store it just in case

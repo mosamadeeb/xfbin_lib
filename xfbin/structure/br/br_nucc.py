@@ -178,12 +178,12 @@ class BrDynamics1(BrStruct):
 
 class BrDynamics2(BrStruct):
     def __br_read__(self, br: 'BinaryReader'):
-        self.offset_z = br.read_float()
-        self.offset_y = br.read_float()
         self.offset_x = br.read_float()
-        self.scale_z = br.read_float()
-        self.scale_y = br.read_float()
+        self.offset_y = br.read_float()
+        self.offset_z = br.read_float()
         self.scale_x = br.read_float()
+        self.scale_y = br.read_float()
+        self.scale_z = br.read_float()
 
         self.coordIndex = br.read_uint16()
         self.boolflag = br.read_uint16()
@@ -200,12 +200,12 @@ class BrDynamics2(BrStruct):
             self.attached_groups = br.read_uint16(self.attached_groups_count)
 
     def __br_write__(self, br: 'BinaryReader', sec2: 'Dynamics2'):
-        br.write_float(sec2.offset_z)
-        br.write_float(sec2.offset_y)
         br.write_float(sec2.offset_x)
-        br.write_float(sec2.scale_z)
-        br.write_float(sec2.scale_y)
+        br.write_float(sec2.offset_y)
+        br.write_float(sec2.offset_z)
         br.write_float(sec2.scale_x)
+        br.write_float(sec2.scale_y)
+        br.write_float(sec2.scale_z)
 
         br.write_uint16(sec2.coord_index)
         br.write_uint16(sec2.attach_groups)
