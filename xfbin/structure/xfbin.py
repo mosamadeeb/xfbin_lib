@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Dict, List, Optional, Tuple, Union
 
-from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial, NuccChunkNull,
+from .nucc import (NuccChunk, NuccChunkClump, NuccChunkMaterial,NuccChunkModelHit, NuccChunkNull,
                    NuccChunkPage, NuccChunkTexture)
 
 
@@ -174,6 +174,8 @@ class Xfbin:
         for model in list(dict.fromkeys(chain(clump.model_chunks, *clump.model_groups))):
             # Clump model groups can have None references, so skip those
             if model:
+                if isinstance(model.hit_chunk, NuccChunkModelHit):
+                    clump_page.add_chunk(model.hit_chunk)
                 clump_page.add_chunk(model)
                 materials.extend(model.material_chunks)
 
