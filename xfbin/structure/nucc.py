@@ -374,7 +374,6 @@ class NuccChunkModel(NuccChunk):
 
         # Reference to the ModelHit chunk of this model
         self.hit_chunk = chunk_list[chunk_indices[br_chunk.hitIndex]]
-
         # This will be set later in the clump, using the index
         self.coord_chunk: Optional[NuccChunkCoord] = None
 
@@ -412,7 +411,6 @@ class NuccChunkModel(NuccChunk):
         # This prevents us from overwriting an existing hit chunk with a null chunk
         if other.hit_chunk and not isinstance(other.hit_chunk, NuccChunkNull):
             self.hit_chunk = other.hit_chunk
-
         self.coord_chunk = other.coord_chunk
         self.coord_index = other.coord_index
 
@@ -477,3 +475,31 @@ class MaterialTextureGroup:
 
     def __iter__(self):
         return iter(self.texture_chunks)
+
+class NuccChunkModelHit(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkModelHit, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        self.data = br_chunk.data
+        self.has_data = True
+        self.has_props = True
+        self.extension = '.modelhit'
+
+        self.mesh_count = br_chunk.mesh_count
+        self.total_vertex_size = br_chunk.total_vertex_size
+
+        self.vertex_sections: List[ModelHit] = list()
+        for hit in br_chunk.vertex_sections:
+            h = ModelHit()
+            h.init_data(hit)
+            self.vertex_sections.append(h)
+
+class ModelHit:
+    def init_data(self, hit: BrModelHit):
+        self.mesh_vertex_size = hit.mesh_vertex_size
+        self.unk_count = hit.unk_count
+        self.flags = hit.flags
+        self.vertex_count = hit.mesh_vertex_size * 3
+        self.mesh_vertices = hit.mesh_vertices
+
+class NuccChunkBillboard(NuccChunk):
+     def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        self.data = br_chunk.data
