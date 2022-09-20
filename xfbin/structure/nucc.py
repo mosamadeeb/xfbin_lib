@@ -6,6 +6,7 @@ from .br.br_nucc import *
 from .br.br_nud import *
 from .br.br_nut import *
 from .nud import Nud
+from .nut import Nut
 
 
 class NuccChunk:
@@ -137,24 +138,11 @@ class NuccChunkTexture(NuccChunk):
         self.has_props = True
 
         self.width = br_chunk.width
-        self.height = br_chunk.width
-
-
-        # Since Nut support has not been added yet, this will be written instead of the Nut object
-        self.file_data = br_chunk.nut_data
-
+        self.height = br_chunk.height
 
         self.nut = Nut()
         self.nut.init_data(br_chunk.brNut)
  
-
-class Nut:
-     def init_data(self, br_chunk: BrNut):
-         self.magic =  br_chunk.magic
-         self.version = br_chunk.version
-
-         self.texture_count = br_chunk.texture_count
-         self.textures = br_chunk.textures
 
 
 class NuccChunkDynamics(NuccChunk):

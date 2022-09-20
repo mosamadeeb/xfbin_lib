@@ -134,6 +134,20 @@ class Xfbin:
             return self.pages[-1]
 
         return result
+    
+    def remove_chunk_page(self, chunk: NuccChunk):
+        """Removes the Page that contains a chunk map reference of the given NuccChunk from this Xfbin.\n
+        Returns True if a Page was removed, False otherwise.\n
+        """
+
+        existing_page = self.get_chunk_page(chunk)
+
+        if existing_page:
+            index, _ = existing_page
+            self.pages.pop(index)
+            return True
+
+        return False
 
     def add_clump_page(self, clump: NuccChunkClump) -> Page:
         """Generates and adds a clump Page to this Xfbin using the given NuccChunkClump Chunk.\n

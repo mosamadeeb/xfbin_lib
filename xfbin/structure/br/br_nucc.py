@@ -1,3 +1,4 @@
+from utils.xfbin_lib.xfbin.structure.nut import Nut
 from ...util import *
 from .br_nud import *
 from .br_nut import *
@@ -86,7 +87,7 @@ class BrNuccChunkTexture(BrNuccChunk):
         self.field06 = br.read_uint16()
 
         self.nutSize = br.read_uint32()
-
+        #self.brNut = br.read_struct(BrNut)
         try:
             self.nut_data = br.buffer()[br.pos(): br.pos() + self.nutSize]
             self.brNut = BinaryReader(self.nut_data, Endian.BIG).read_struct(BrNut)
@@ -95,24 +96,31 @@ class BrNuccChunkTexture(BrNuccChunk):
             self.brNut = None
 
         # Skip the nut size
-        br.seek(self.nutSize, Whence.CUR)
+        #br.seek(self.nutSize, Whence.CUR)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         # TODO: Actual NUT writing
         # Read the NUT data to get the width and height
         # This is needed for compatibility with the exporter, until full support is added
-        br_nut: BrNut = BinaryReader(self.nuccChunk.file_data, Endian.BIG).read_struct(BrNut)
+        #br_nut: BrNut = BinaryReader(self.nuccChunk.file_data, Endian.BIG).read_struct(BrNut)
 
+        
         br.write_uint16(0)  # Placeholder values
-        br.write_uint16(br_nut.textures[0].width if br_nut.textures else 0)
-        br.write_uint16(br_nut.textures[0].height if br_nut.textures else 0)
+        br.write_uint16(self.nuccChunk.nut.textures[0].width if self.nuccChunk.nut.textures else 0)
+        br.write_uint16(self.nuccChunk.nut.textures[0].height if self.nuccChunk.nut.textures else 0)
         br.write_uint16(0)
 
-        nut_data_size = len(self.nuccChunk.file_data)
-        br.write_uint32(nut_data_size)
+        with BinaryReader(endianness=Endian.BIG) as br_internal:
+            br_internal.write_struct(BrNut(), self.nuccChunk.nut)
 
-        br.extend(self.nuccChunk.file_data)
-        br.seek(nut_data_size, Whence.CUR)
+            # Write the nut size
+            br.write_uint32(br_internal.size())
+            # Write the nut data
+            br.extend(br_internal.buffer())
+            # Advance the position
+            br.seek(br_internal.size(), Whence.CUR)
+
+        
 
 
 class BrNuccChunkDynamics(BrNuccChunk):
