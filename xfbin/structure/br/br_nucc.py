@@ -1,4 +1,3 @@
-from utils.xfbin_lib.xfbin.structure.nut import Nut
 from ...util import *
 from .br_nud import *
 from .br_nut import *
