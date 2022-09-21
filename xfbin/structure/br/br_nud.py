@@ -35,7 +35,8 @@ class BrNud(BrStruct):
 
         self.boundingSphere = br.read_float(4)
 
-        self.meshGroups: Tuple[BrNudMeshGroup] = br.read_struct(BrNudMeshGroup, self.meshGroupCount, self)
+        self.meshGroups: Tuple[BrNudMeshGroup] = br.read_struct(
+            BrNudMeshGroup, self.meshGroupCount, self)
 
         for g in self.meshGroups:
             g.meshes = br.read_struct(BrNudMesh, g.meshCount, self)
@@ -46,7 +47,8 @@ class BrNud(BrStruct):
             mesh_group_count = len(nud.mesh_groups)
             mesh_count = sum(map(lambda x: len(x.meshes), nud.mesh_groups))
             for mesh_group in nud.mesh_groups:
-                br_internal.write_struct(BrNudMeshGroup(), mesh_group, buffers, mesh_group_count, mesh_count)
+                br_internal.write_struct(
+                    BrNudMeshGroup(), mesh_group, buffers, mesh_group_count, mesh_count)
 
             # Write the mesh and material buffers
             br_internal.extend(buffers.meshes.buffer())
@@ -148,11 +150,13 @@ class BrNudMeshGroup(BrStruct):
         br.write_int16(len(mesh_group.meshes))
 
         # Start offset of mesh info
-        br.write_uint32(buffers.meshes.size() + 0x30 + (mesh_groups_count * 0x30))
+        br.write_uint32(buffers.meshes.size() + 0x30 +
+                        (mesh_groups_count * 0x30))
 
         # Write each mesh in this group
         for mesh in mesh_group.meshes:
-            buffers.meshes.write_struct(BrNudMesh(), mesh, buffers, mesh_groups_count, mesh_count)
+            buffers.meshes.write_struct(
+                BrNudMesh(), mesh, buffers, mesh_groups_count, mesh_count)
 
 
 class BrNudMesh(BrStruct):
@@ -193,7 +197,8 @@ class BrNudMesh(BrStruct):
                     elif uvType == NudUvType.Byte:
                         colors.append(br.read_uint8(4))
                     elif uvType == NudUvType.HalfFloat:
-                        colors.append(list(map(lambda x: int(x * 255), br.read_half_float(4))))
+                        colors.append(
+                            list(map(lambda x: int(x * 255), br.read_half_float(4))))
 
                     uvs.append(list())
                     for _ in range(uvCount):
@@ -201,7 +206,8 @@ class BrNudMesh(BrStruct):
 
                 br.seek(self.vertAddClumpStart)
 
-            self.vertices = br.read_struct(BrNudVertex, self.vertexCount, vertexType, boneType, self.uvSize)
+            self.vertices = br.read_struct(
+                BrNudVertex, self.vertexCount, vertexType, boneType, self.uvSize)
 
             if boneType > 0:
                 for i in range(self.vertexCount):
@@ -213,7 +219,8 @@ class BrNudMesh(BrStruct):
         self.materials: List[BrNudMaterial] = list()
         while i < 4 and self.texProps[i] != 0:
             with br.seek_to(self.texProps[i]):
-                self.materials.append(br.read_struct(BrNudMaterial, None, self, nud.nameStart))
+                self.materials.append(br.read_struct(
+                    BrNudMaterial, None, self, nud.nameStart))
             i += 1
 
     def __br_write__(self, br: 'BinaryReader', mesh: 'NudMesh', buffers: NudBuffers, mesh_groups_count, mesh_count):
@@ -237,7 +244,8 @@ class BrNudMesh(BrStruct):
         # Write materials
         tex_props = [0] * 4
         for i, material in enumerate(mesh.materials[:4]):
-            tex_props[i] = buffers.materials.size() + 0x30 + (mesh_groups_count * 0x30) + (mesh_count * 0x30)
+            tex_props[i] = buffers.materials.size() + 0x30 + \
+                (mesh_groups_count * 0x30) + (mesh_count * 0x30)
             buffers.materials.write_struct(BrNudMaterial(), material, buffers)
 
         # Write material offsets
@@ -260,7 +268,8 @@ class BrNudMesh(BrStruct):
             buffers.polyClump.write_int16(-1)
 
         # Write the last triangle (without the -1)
-        buffers.polyClump.write_int16((mesh.faces[-1][2], mesh.faces[-1][0], mesh.faces[-1][1]))
+        buffers.polyClump.write_int16(
+            (mesh.faces[-1][2], mesh.faces[-1][0], mesh.faces[-1][1]))
 
         # Write UV + vertices
         vertex_br = buffers.vertClump
@@ -270,13 +279,15 @@ class BrNudMesh(BrStruct):
                 if uv_type == NudUvType.Byte:
                     buffers.vertClump.write_uint8(vertex.color)
                 elif uv_type == NudUvType.HalfFloat:
-                    buffers.vertClump.write_half_float(tuple(map(lambda x: x / 255, vertex.color)))
+                    buffers.vertClump.write_half_float(
+                        tuple(map(lambda x: x / 255, vertex.color)))
 
                 for uv in vertex.uv:
                     buffers.vertClump.write_half_float(uv)
 
         for vertex in mesh.vertices:
-            vertex_br.write_struct(BrNudVertex(), vertex, vertex_type, bone_type, uv_type)
+            vertex_br.write_struct(BrNudVertex(), vertex,
+                                   vertex_type, bone_type, uv_type)
 
         buffers.vertAddClump.align(4)
 
@@ -360,7 +371,8 @@ class BrNudVertex(BrStruct):
             self.boneWeights = br.read_half_float(4)
         elif boneType == NudBoneType.Byte:
             self.boneIds = br.read_uint8(4)
-            self.boneWeights = list(map(lambda x: float(x) / 255, br.read_uint8(4)))
+            self.boneWeights = list(
+                map(lambda x: float(x) / 255, br.read_uint8(4)))
         else:
             raise Exception(f'Unsupported bone type: {boneType}')
 
@@ -383,7 +395,8 @@ class BrNudVertex(BrStruct):
             br.write_float(1.0)
             br.write_float(vertex.normal if vertex.normal else [0] * 3)
             br.write_float(1.0)
-            br.write_float(vertex.bitangent[:3] if vertex.bitangent else [0] * 3)
+            br.write_float(vertex.bitangent[:3]
+                           if vertex.bitangent else [0] * 3)
             br.write_float(0)
             br.write_float(vertex.tangent[:3] if vertex.tangent else [0] * 3)
             br.write_float(0)
@@ -414,7 +427,8 @@ class BrNudVertex(BrStruct):
             br.write_half_float(vertex.bone_weights)
         elif boneType == NudBoneType.Byte:
             br.write_uint8(vertex.bone_ids)
-            br.write_float(tuple(map(lambda x: int(x * 255), vertex.bone_weights)))
+            br.write_float(
+                tuple(map(lambda x: int(x * 255), vertex.bone_weights)))
 
 
 class BrNudMaterial(BrStruct):
@@ -476,7 +490,8 @@ class BrNudMaterial(BrStruct):
         # Write material properties
         if material.properties:
             for i, property in enumerate(material.properties):
-                br.write_struct(BrNudMaterialProperty(), property, buffers, i == (len(material.properties) - 1))
+                br.write_struct(BrNudMaterialProperty(), property,
+                                buffers, i == (len(material.properties) - 1))
         else:
             br.write_uint32([0] * 4)  # One "empty" entry
 
@@ -543,7 +558,8 @@ class BrNudMaterialProperty(BrStruct):
         # Align the strings first
         buffers.names.align(0x10)
 
-        br.write_uint32(0 if is_last else 0x10 + (4 * len(property.values)))  # matAttSize
+        br.write_uint32(0 if is_last else 0x10 +
+                        (4 * len(property.values)))  # matAttSize
         br.write_uint32(buffers.names.size())  # nameStart
 
         buffers.names.write_str(property.name, True)
