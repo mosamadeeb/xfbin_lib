@@ -96,6 +96,8 @@ class BrNuccChunkTexture(BrNuccChunk):
                 f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNut = None
 
+        #br.seek(self.nutSize, Whence.CUR)
+
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
 
         br.write_uint16(0)  # Placeholder values
