@@ -70,27 +70,26 @@ class BrNutTexture(BrStruct):
         self.hash_id = br.read_uint32()
         br.read_uint32()
 
-
         if self.is_cube_map:
             self.cubemap_faces = [br.read_bytes(
                 self.cubemap_size1) for i in range(6)]
             self.texture_data = self.mipmaps = b''.join(self.cubemap_faces)
 
         elif self.mipmap_count > 1:
-            print(sum(self.mipmap_sizes))
             if sum(self.mipmap_sizes) != self.data_size:
-                print('Invalid mipmap sizes or data size.')
 
-                self.texture_data = self.mipmaps = br.read_bytes(self.mipmap_sizes[0]) 
+                self.texture_data = self.mipmaps = br.read_bytes(
+                    self.mipmap_sizes[0])
                 self.data_size = self.mipmap_sizes[0]
                 self.mipmap_count = 1
                 self.header_size = 80
-                self.total_size = self.header_size + self.data_size                
+                self.total_size = self.header_size + self.data_size
 
             else:
-                self.mipmaps = [br.read_bytes(self.mipmap_sizes[i]) for i in range(self.mipmap_count)]
+                self.mipmaps = [br.read_bytes(
+                    self.mipmap_sizes[i]) for i in range(self.mipmap_count)]
                 self.texture_data = b''.join(self.mipmaps)
-        
+
         else:
             self.mipmaps = [br.read_bytes(self.data_size)]
             self.texture_data = self.mipmaps[0]
@@ -127,10 +126,9 @@ class BrNutTexture(BrStruct):
 
         if nutTex.mipmap_count > 1:
             for mip in nutTex.mipmaps:
-                print(len(mip))
                 br.write_uint32(len(mip))
 
-        while br.pos()  % 0x10 != 0:
+        while br.pos() % 0x10 != 0:
             br.write_uint8(0)
         br.write_str('eXt')
         br.write_uint8(0)
