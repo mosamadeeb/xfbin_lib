@@ -148,6 +148,8 @@ class NuccChunkTexture(NuccChunk):
 class NuccChunkDynamics(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
+        self.has_data = True
+        self.has_props = True
         self.extension = '.dynamics'
 
         self.SPGroupCount = br_chunk.SPGroupCount
@@ -201,6 +203,7 @@ class Dynamics2:
 
 
 class NuccChunkClump(NuccChunk):
+
     def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
         self.has_data = True
@@ -399,8 +402,6 @@ class NuccChunkModel(NuccChunk):
 
         self.clump_chunk = other.clump_chunk
 
-        # TODO: Remove this check once NuccChunkModelHit is imported into blender
-        # This prevents us from overwriting an existing hit chunk with a null chunk
         if other.hit_chunk and not isinstance(other.hit_chunk, NuccChunkNull):
             self.hit_chunk = other.hit_chunk
         self.coord_chunk = other.coord_chunk
