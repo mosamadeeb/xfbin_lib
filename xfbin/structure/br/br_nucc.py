@@ -1,4 +1,3 @@
-from utils.xfbin_lib.xfbin.structure.nut import Nut
 from ...util import *
 from .br_nud import *
 from .br_nut import *
@@ -87,26 +86,25 @@ class BrNuccChunkTexture(BrNuccChunk):
         self.field06 = br.read_uint16()
 
         self.nutSize = br.read_uint32()
-        #self.brNut = br.read_struct(BrNut)
+
         try:
             self.nut_data = br.buffer()[br.pos(): br.pos() + self.nutSize]
-            self.brNut = BinaryReader(self.nut_data, Endian.BIG).read_struct(BrNut)
+            self.brNut = BinaryReader(
+                self.nut_data, Endian.BIG).read_struct(BrNut)
         except:
-            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
+            print(
+                f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNut = None
 
         #br.seek(self.nutSize, Whence.CUR)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
-        # TODO: Actual NUT writing
-        # Read the NUT data to get the width and height
-        # This is needed for compatibility with the exporter, until full support is added
-        #br_nut: BrNut = BinaryReader(self.nuccChunk.file_data, Endian.BIG).read_struct(BrNut)
 
-        
         br.write_uint16(0)  # Placeholder values
-        br.write_uint16(self.nuccChunk.nut.textures[0].width if self.nuccChunk.nut.textures else 0)
-        br.write_uint16(self.nuccChunk.nut.textures[0].height if self.nuccChunk.nut.textures else 0)
+        br.write_uint16(
+            self.nuccChunk.nut.textures[0].width if self.nuccChunk.nut.textures else 0)
+        br.write_uint16(
+            self.nuccChunk.nut.textures[0].height if self.nuccChunk.nut.textures else 0)
         br.write_uint16(0)
 
         with BinaryReader(endianness=Endian.BIG) as br_internal:
@@ -118,8 +116,6 @@ class BrNuccChunkTexture(BrNuccChunk):
             br.extend(br_internal.buffer())
             # Advance the position
             br.seek(br_internal.size(), Whence.CUR)
-
-        
 
 
 class BrNuccChunkDynamics(BrNuccChunk):
@@ -136,8 +132,9 @@ class BrNuccChunkDynamics(BrNuccChunk):
         self.ColSphere = br.read_struct(BrDynamics2, self.ColSphereCount)
 
         # Read all shorts as a single tuple for now
-        self.section1Shorts = br.read_uint16(sum(map(lambda x: x.BonesCount, self.SPGroup)))
-        #print(self.section1Shorts)
+        self.section1Shorts = br.read_uint16(
+            sum(map(lambda x: x.BonesCount, self.SPGroup)))
+        # print(self.section1Shorts)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         chunk = self.nuccChunk
@@ -269,10 +266,12 @@ class BrNuccChunkClump(BrNuccChunk):
         coord_chunks_dict = IterativeDict()
         coord_chunks_dict.update_or_next(self.nuccChunk.coord_chunks)
 
-        coord_chunks = tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.coord_chunks))
+        coord_chunks = tuple(
+            map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.coord_chunks))
 
         for coord in self.nuccChunk.coord_chunks:
-            br.write_int16(coord_chunks_dict[coord.node.parent.chunk] if coord.node.parent else -1)
+            br.write_int16(
+                coord_chunks_dict[coord.node.parent.chunk] if coord.node.parent else -1)
 
         br.write_uint32(coord_chunks)
 
@@ -283,7 +282,8 @@ class BrNuccChunkClump(BrNuccChunk):
         # TODO: is this correct?
         br.write_uint32(0)
 
-        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.model_chunks)))
+        br.write_uint32(
+            tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.model_chunks)))
 
         for group in self.nuccChunk.model_groups:
             br.write_struct(BrClumpModelGroup(), group, chunkIndexDict)
@@ -316,7 +316,8 @@ class BrClumpModelGroup(BrStruct):
 
         br.write_int32(model_group.unk)
 
-        br.write_int32(tuple(map(lambda x: chunkIndexDict.get_or_next(x) if x else -1, model_group.model_chunks)))
+        br.write_int32(tuple(map(lambda x: chunkIndexDict.get_or_next(
+            x) if x else -1, model_group.model_chunks)))
 
 
 class BrNuccChunkModel(BrNuccChunk):
@@ -324,7 +325,8 @@ class BrNuccChunkModel(BrNuccChunk):
         super().init_data(br)
 
         self.field00 = br.read_uint16()
-        self.riggingFlag = br.read_uint16()  # Affects if the model is correctly rigged to its bones or not
+        # Affects if the model is correctly rigged to its bones or not
+        self.riggingFlag = br.read_uint16()
 
         self.materialFlags = br.read_uint8(4)
 
@@ -338,7 +340,8 @@ class BrNuccChunkModel(BrNuccChunk):
 
         if nudStart == -1:
             # This shouldn't happen
-            raise Exception(f'Could not find NDP3 magic in chunk: {self.name} of type: {type(self).__name__}')
+            raise Exception(
+                f'Could not find NDP3 magic in chunk: {self.name} of type: {type(self).__name__}')
 
         # Read nudSize from inside the NUD itself
         with br.seek_to(nudStart + 4):
@@ -361,9 +364,11 @@ class BrNuccChunkModel(BrNuccChunk):
 
         try:
             self.nud_data = br.buffer()[br.pos(): br.pos() + self.nudSize]
-            self.brNud = BinaryReader(self.nud_data, Endian.BIG).read_struct(BrNud)
+            self.brNud = BinaryReader(
+                self.nud_data, Endian.BIG).read_struct(BrNud)
         except:
-            print(f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
+            print(
+                f'Failed to read chunk: {self.name} of type: {type(self).__qualname__}')
             self.brNud = None
 
         # Skip the nud size
@@ -394,7 +399,8 @@ class BrNuccChunkModel(BrNuccChunk):
 
         # Index of the mesh bone of this model in the clump
         # This might be shared by multiple models
-        br.write_uint32(self.nuccChunk.coord_index if self.nuccChunk.coord_index != -1 else 0)
+        br.write_uint32(
+            self.nuccChunk.coord_index if self.nuccChunk.coord_index != -1 else 0)
 
         # Write the BrNud using the NuccChunk's NUD
         with BinaryReader(endianness=Endian.BIG) as br_internal:
@@ -414,7 +420,8 @@ class BrNuccChunkModel(BrNuccChunk):
         br.write_uint16(len(self.nuccChunk.material_chunks))
 
         # Write the material chunk indices
-        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.material_chunks)))
+        br.write_uint32(tuple(
+            map(lambda x: chunkIndexDict.get_or_next(x), self.nuccChunk.material_chunks)))
 
 
 class BrNuccChunkMaterial(BrNuccChunk):
@@ -456,7 +463,8 @@ class BrNuccChunkMaterial(BrNuccChunk):
         self.format = br.read_uint8()
         self.floats = br.read_float(self.float_count(self.format))
 
-        self.textureGroups = br.read_struct(BrMaterialTextureGroup, self.groupCount)
+        self.textureGroups = br.read_struct(
+            BrMaterialTextureGroup, self.groupCount)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         br.write_uint16(len(self.nuccChunk.texture_groups))
@@ -472,7 +480,8 @@ class BrNuccChunkMaterial(BrNuccChunk):
 
         # Float format
         br.write_uint8(self.nuccChunk.format if self.nuccChunk.floats else 0)
-        br.write_float(self.nuccChunk.floats[:self.float_count(self.nuccChunk.format)])
+        br.write_float(
+            self.nuccChunk.floats[:self.float_count(self.nuccChunk.format)])
 
         for group in self.nuccChunk.texture_groups:
             br.write_struct(BrMaterialTextureGroup(), group, chunkIndexDict)
@@ -496,7 +505,8 @@ class BrMaterialTextureGroup(BrStruct):
         br.write_int32(texture_group.unk)
 
         # Write the texture chunk indices
-        br.write_uint32(tuple(map(lambda x: chunkIndexDict.get_or_next(x), texture_group.texture_chunks)))
+        br.write_uint32(tuple(
+            map(lambda x: chunkIndexDict.get_or_next(x), texture_group.texture_chunks)))
 
 
 class BrNuccChunkCoord(BrNuccChunk):
@@ -518,25 +528,24 @@ class BrNuccChunkCoord(BrNuccChunk):
         br.write_float(node.unkFloat)
         br.write_uint16(node.unkShort)
 
+
 class BrNuccChunkModelHit(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
 
         self.mesh_count = br.read_uint32()
         print(f'Mesh count {self.mesh_count}')
-        self.total_vertex_size = br.read_uint32() #multiplied by 3
+        self.total_vertex_size = br.read_uint32()  # multiplied by 3
         print(f'Total vertex size {self.total_vertex_size}')
         self.vertex_sections = br.read_struct(BrModelHit, self.mesh_count)
 
-
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         br.write_uint32(self.nuccChunk.mesh_count)
-        
+
         br.write_uint32(self.nuccChunk.total_vertex_size)
 
         for hit in self.nuccChunk.vertex_sections:
             br.write_struct(BrModelHit(), hit)
-        
 
 
 class BrModelHit(BrStruct):
@@ -549,17 +558,18 @@ class BrModelHit(BrStruct):
         self.flags = br.read_uint8(3)
         print(self.flags)
 
-        #Check if the next 8 bytes are padded
+        # Check if the next 8 bytes are padded
         if br.read_uint16() != 0:
-            #version 79
-            br.seek(-2,1)
+            # version 79
+            br.seek(-2, 1)
         else:
-            #version 7A
-            br.seek(-2,1)
+            # version 7A
+            br.seek(-2, 1)
             self.unk = br.read_uint64()
         self.vertex_count = self.mesh_vertex_size * 3
         print(self.vertex_count)
-        self.mesh_vertices = [br.read_float(3) for i in range(self.vertex_count)]
+        self.mesh_vertices = [br.read_float(3)
+                              for i in range(self.vertex_count)]
         print(self.mesh_vertices)
 
     def __br_write__(self, br: 'BinaryReader', hit: 'ModelHit'):
@@ -569,11 +579,11 @@ class BrModelHit(BrStruct):
         for vertices in hit.mesh_vertices:
             br.write_float(vertices)
 
+
 class BrNuccChunkBillboard(BrNuccChunk):
     def init_data(self, br: BinaryReader):
         super().init_data(br)
         self.data = br.read_uint8(len(br.buffer()))
-
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         br.write_uint8(self.nuccChunk.data)
