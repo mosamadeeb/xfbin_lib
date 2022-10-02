@@ -134,7 +134,6 @@ class BrNuccChunkDynamics(BrNuccChunk):
         # Read all shorts as a single tuple for now
         self.section1Shorts = br.read_uint16(
             sum(map(lambda x: x.BonesCount, self.SPGroup)))
-        # print(self.section1Shorts)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
         chunk = self.nuccChunk
@@ -393,7 +392,6 @@ class BrNuccChunkModel(BrNuccChunk):
             br.write_uint8(3)
 
         br.write_uint32(0)
-        print(self.nuccChunk.clump_chunk.name)
         br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.clump_chunk))
         br.write_uint32(chunkIndexDict.get_or_next(self.nuccChunk.hit_chunk))
 
@@ -534,9 +532,7 @@ class BrNuccChunkModelHit(BrNuccChunk):
         super().init_data(br)
 
         self.mesh_count = br.read_uint32()
-        print(f'Mesh count {self.mesh_count}')
         self.total_vertex_size = br.read_uint32()  # multiplied by 3
-        print(f'Total vertex size {self.total_vertex_size}')
         self.vertex_sections = br.read_struct(BrModelHit, self.mesh_count)
 
     def __br_write__(self, br: 'BinaryReader', chunkIndexDict: IterativeDict):
@@ -552,11 +548,8 @@ class BrModelHit(BrStruct):
     def __br_read__(self, br: 'BinaryReader'):
 
         self.mesh_vertex_size = br.read_uint32()
-        print(self.mesh_vertex_size)
         self.unk_count = br.read_uint8()
-        print(self.unk_count)
         self.flags = br.read_uint8(3)
-        print(self.flags)
 
         # Check if the next 8 bytes are padded
         if br.read_uint16() != 0:
@@ -567,10 +560,8 @@ class BrModelHit(BrStruct):
             br.seek(-2, 1)
             self.unk = br.read_uint64()
         self.vertex_count = self.mesh_vertex_size * 3
-        print(self.vertex_count)
         self.mesh_vertices = [br.read_float(3)
                               for i in range(self.vertex_count)]
-        print(self.mesh_vertices)
 
     def __br_write__(self, br: 'BinaryReader', hit: 'ModelHit'):
         br.write_uint32(hit.mesh_vertex_size)
