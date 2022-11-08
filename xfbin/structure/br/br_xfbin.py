@@ -79,7 +79,8 @@ class BrXfbin(BrStruct):
         br_chunk_table_writer.write_struct(br_chunk_table)
 
         br_header = BrNuccHeader()
-        br_header.chunkTableSize = br_chunk_table_writer.size() - br_chunk_table.chunkMapReferencesSize
+        br_header.chunkTableSize = br_chunk_table_writer.size(
+        ) - br_chunk_table.chunkMapReferencesSize
 
         # Write the header
         br.write_struct(br_header)
@@ -102,7 +103,8 @@ class BrNuccHeader(BrStruct):
 
         if self.magic != 'NUCC':
             if self.magic == 'CPK ':
-                raise Exception('Invalid magic. XFBIN file is possibly CPK compressed.')
+                raise Exception(
+                    'Invalid magic. XFBIN file is possibly CPK compressed.')
 
             raise Exception('Invalid magic.')
 
@@ -123,7 +125,8 @@ class BrNuccHeader(BrStruct):
         br.write_uint64(0)
 
         br.write_uint32(self.chunkTableSize)
-        br.write_uint32(3)  # TODO: Doesn't really affect anything, but should test with xfbins with references
+        # TODO: Doesn't really affect anything, but should test with xfbins with references
+        br.write_uint32(3)
 
         br.write_uint16(0x79)  # nuccID
         br.write_uint16(0)
@@ -170,10 +173,12 @@ class BrChunkTable(BrStruct):
         # Align after reading strings
         br.align_pos(4)
 
-        self.chunkMaps: List[BrChunkMap] = br.read_struct(BrChunkMap, self.chunkMapCount)
+        self.chunkMaps: List[BrChunkMap] = br.read_struct(
+            BrChunkMap, self.chunkMapCount)
 
         # Chunk references are placed between chunk maps and chunk map indices
-        self.chunkMapReferences: List[BrChunkReference] = br.read_struct(BrChunkReference, self.chunkMapReferencesCount)
+        self.chunkMapReferences: List[BrChunkReference] = br.read_struct(
+            BrChunkReference, self.chunkMapReferencesCount)
 
         self.chunkMapIndices = br.read_uint32(self.chunkMapIndicesCount)
 
@@ -185,7 +190,8 @@ class BrChunkTable(BrStruct):
 
     def get_br_nucc_chunk(self, br_chunk: 'BrChunk', page_start_index: int) -> BrNuccChunk:
         # Get the chunk map of the br_chunk
-        chunk_map = self.chunkMaps[self.chunkMapIndices[page_start_index + br_chunk.chunkMapIndex]]
+        chunk_map = self.chunkMaps[self.chunkMapIndices[page_start_index +
+                                                        br_chunk.chunkMapIndex]]
 
         # Create and return a BrNuccChunk with the correct type from the map
         return BrNuccChunk.create_from_nucc_type(*self.get_props_from_chunk_map(chunk_map), br_chunk.data)
@@ -195,7 +201,8 @@ class BrChunkTable(BrStruct):
         chunk_type_indices = IterativeDict()
         file_path_indices = IterativeDict()
         chunk_name_indices = IterativeDict()
-        dict_tuple = (chunk_type_indices, file_path_indices, chunk_name_indices)
+        dict_tuple = (chunk_type_indices,
+                      file_path_indices, chunk_name_indices)
 
         with BinaryReader(endianness=Endian.BIG) as br_internal:
             # Write the chunk maps
@@ -206,19 +213,22 @@ class BrChunkTable(BrStruct):
             # Update the names dictionary with the chunk references
             # TODO: This should be done by each chunk in its own references, but for now
             # we do it separately after all chunks have been processed
-            chunk_name_indices.update_or_next(list(map(lambda x: x.name, self.chunkReferences)))
+            chunk_name_indices.update_or_next(
+                list(map(lambda x: x.name, self.chunkReferences)))
 
             # Store position to calculate chunk map references size
             ref_start_pos = br_internal.pos()
 
             # Write the chunk map references
             for ref in self.chunkReferences:
-                br_internal.write_struct(BrChunkReference(), ref, chunk_name_indices, self.chunkMapDict)
+                br_internal.write_struct(
+                    BrChunkReference(), ref, chunk_name_indices, self.chunkMapDict)
 
             self.chunkMapReferencesSize = br_internal.pos() - ref_start_pos
 
             # Write the chunk map indices
-            br_internal.write_uint32(list(map(lambda x: self.chunkMapDict[x], self.chunkMapIndices)))
+            br_internal.write_uint32(
+                list(map(lambda x: self.chunkMapDict[x], self.chunkMapIndices)))
 
             chunk_map_buffer = br_internal.buffer()
 
@@ -266,7 +276,8 @@ class BrChunkMap(BrStruct):
 
     def __br_write__(self, br: 'BinaryReader', chunk_tuple: tuple, dict_tuple: Tuple[IterativeDict]):
         # Write each of the type, file path, and name indices
-        br.write_uint32(list(map(lambda x, y: y.get_or_next(x), chunk_tuple, dict_tuple)))
+        br.write_uint32(
+            list(map(lambda x, y: y.get_or_next(x), chunk_tuple, dict_tuple)))
 
 
 class BrChunkReference(BrStruct):
@@ -317,7 +328,8 @@ class BrPage(BrStruct):
             br_chunk: BrChunk = br.read_struct(BrChunk)
 
             # Convert the BrChunk to a BrNuccChunk
-            chunk = br_xfbin.chunkTable.get_br_nucc_chunk(br_chunk, br_xfbin.curPageStart)
+            chunk = br_xfbin.chunkTable.get_br_nucc_chunk(
+                br_chunk, br_xfbin.curPageStart)
 
             # Add the BrNuccChunk to the dictionary by its local map index (for use when converting BrNuccChunks to NuccChunks)
             self.chunksDict[br_chunk.chunkMapIndex] = chunk
@@ -370,10 +382,12 @@ class BrPage(BrStruct):
 
         # TODO: This should be populated by the individual BrChunks being written
         # For now, it is being copied from the Page object
-        self.chunkReferences: List[ChunkReference] = list(page.chunk_references)
+        self.chunkReferences: List[ChunkReference] = list(
+            page.chunk_references)
 
         # Write the page chunk
         # This is just a placeholder and the actual data will be given by the BrPage's dictionary
         br_nucc_page = BrNuccChunkPage()
         br_nucc_page.nuccChunk = NuccChunkPage()
-        br.write_struct(BrChunk(), br_nucc_page, self.chunkIndexDict, self.chunkReferences)
+        br.write_struct(BrChunk(), br_nucc_page,
+                        self.chunkIndexDict, self.chunkReferences)

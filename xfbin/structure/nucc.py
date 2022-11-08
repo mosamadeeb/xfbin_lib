@@ -7,6 +7,7 @@ from .br.br_nucc import *
 from .br.br_nud import *
 from .br.br_nut import *
 from .nud import Nud
+from .nut import Nut
 
 
 class NuccChunk:
@@ -31,7 +32,8 @@ class NuccChunk:
         self.data = data
         self.has_data = True
 
-        self.chunks = [c for c in chunks if not isinstance(c, (NuccChunkPage, NuccChunkIndex))]
+        self.chunks = [c for c in chunks if not isinstance(
+            c, (NuccChunkPage, NuccChunkIndex))]
 
     def init_data(self, br_chunk: BrNuccChunk, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         """Initializes the data of this `NuccChunk` from a `BrNuccChunk`, using a chunk list and a list of
@@ -138,13 +140,10 @@ class NuccChunkTexture(NuccChunk):
         self.has_props = True
 
         self.width = br_chunk.width
-        self.height = br_chunk.width
+        self.height = br_chunk.height
 
-        # Since Nut support has not been added yet, this will be written instead of the Nut object
-        self.file_data = br_chunk.nut_data
-
-        # TODO: Implement Nut
-        #self.nut = Nut(br_chunk.brNut)
+        self.nut = Nut()
+        self.nut.init_data(br_chunk.brNut)
 
 
 class NuccChunkDynamics(NuccChunk):
@@ -152,48 +151,62 @@ class NuccChunkDynamics(NuccChunk):
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
+        self.extension = '.dynamics'
 
+        self.SPGroupCount = br_chunk.SPGroupCount
+        self.ColSphereCount = br_chunk.ColSphereCount
         self.clump_chunk: NuccChunkClump = chunk_list[chunk_indices[br_chunk.clumpChunkIndex]]
-
         # Make an iterator to give each Dynamics1 entry its own values
         sec1_shorts = iter(br_chunk.section1Shorts)
 
-        self.section1: List[Dynamics1] = list()
-        for sec1 in br_chunk.section1:
+        self.SPGroup: List[Dynamics1] = list()
+        for sec1 in br_chunk.SPGroup:
             d = Dynamics1()
             d.init_data(sec1, sec1_shorts)
-            self.section1.append(d)
+            self.SPGroup.append(d)
 
-        self.section2: List[Dynamics2] = list()
-        for sec2 in br_chunk.section2:
+        self.ColSphere: List[Dynamics2] = list()
+        for sec2 in br_chunk.ColSphere:
             d = Dynamics2()
             d.init_data(sec2)
-            self.section2.append(d)
+            self.ColSphere.append(d)
 
 
 class Dynamics1:
     def init_data(self, sec1: BrDynamics1, sec1_shorts: Iterator):
-        self.floats = sec1.floats
+        self.Bounciness = sec1.Bounciness
+        self.Elasticity = sec1.Elasticity
+        self.Stiffness = sec1.Stiffness
+        self.Movement = sec1.Movement
         self.coord_index = sec1.coordIndex
+        self.BonesCount = sec1.BonesCount
 
         self.shorts = list()
-        for _ in range(sec1.unkCount):
+        for _ in range(sec1.BonesCount):
             self.shorts.append(next(sec1_shorts))
 
 
 class Dynamics2:
     def init_data(self, sec2: BrDynamics2):
-        self.floats = sec2.floats
+        self.offset_x = sec2.offset_x
+        self.offset_y = sec2.offset_y
+        self.offset_z = sec2.offset_z
+        self.scale_x = sec2.scale_x
+        self.scale_y = sec2.scale_y
+        self.scale_z = sec2.scale_z
         self.coord_index = sec2.coordIndex
-
+        self.attach_groups = sec2.boolflag
         # Should always be -1, but let's store it just in case
         self.negative_unk = sec2.negativeUnk
 
-        self.unk_short_tuples = list(sec2.unkShortTuples)
+        self.attached_groups_count = sec2.attached_groups_count
+        self.attached_groups = sec2.attached_groups
 
 
 class NuccChunkClump(NuccChunk):
+
     def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
+
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
@@ -220,7 +233,8 @@ class NuccChunkClump(NuccChunk):
             else:
                 # Set the node's parent and add the node to its parent's children
                 self.coord_chunks[i].node.parent = self.coord_chunks[j].node
-                self.coord_chunks[j].node.children.append(self.coord_chunks[i].node)
+                self.coord_chunks[j].node.children.append(
+                    self.coord_chunks[i].node)
 
         # Get the model chunks
         self.model_chunks: List[NuccChunkModel] = list()
@@ -238,7 +252,8 @@ class NuccChunkClump(NuccChunk):
         self.model_groups: List[ClumpModelGroup] = list()
         for model_group in br_chunk.modelGroups:
             self.model_groups.append(ClumpModelGroup())
-            self.model_groups[-1].init_data(model_group, self.coord_chunks, chunk_list, chunk_indices)
+            self.model_groups[-1].init_data(model_group,
+                                            self.coord_chunks, chunk_list, chunk_indices)
 
     def clear_non_model_chunks(self, model_list: bool = True, model_groups: bool = True, none_refs: bool = False) -> int:
         """Removes all chunks that are not NuccChunkModel from the model list and model groups of this clump, based on the arguments.\n
@@ -246,7 +261,8 @@ class NuccChunkClump(NuccChunk):
         Returns the number of chunks removed, including duplicates.
         """
 
-        org_count = len(self.model_chunks) + sum(list(map(lambda x: len(x.model_chunks), self.model_groups)))
+        org_count = len(self.model_chunks) + \
+            sum(list(map(lambda x: len(x.model_chunks), self.model_groups)))
 
         if model_list:
             self.model_chunks = [x for x in self.model_chunks if isinstance(
@@ -347,14 +363,14 @@ class NuccChunkModel(NuccChunk):
 
         # Get the transparency/shading flags
         self.material_flags: List[int] = br_chunk.materialFlags
-        self.flag1_floats = br_chunk.flag1Floats if self.material_flags[1] & 0x04 else tuple()
+        self.flag1_floats = br_chunk.flag1Floats if self.material_flags[1] & 0x04 else tuple(
+        )
 
         # Reference to the clump chunk of this page
         self.clump_chunk = chunk_list[chunk_indices[br_chunk.clumpIndex]]
 
         # Reference to the ModelHit chunk of this model
         self.hit_chunk = chunk_list[chunk_indices[br_chunk.hitIndex]]
-
         # This will be set later in the clump, using the index
         self.coord_chunk: Optional[NuccChunkCoord] = None
 
@@ -388,11 +404,8 @@ class NuccChunkModel(NuccChunk):
 
         self.clump_chunk = other.clump_chunk
 
-        # TODO: Remove this check once NuccChunkModelHit is imported into blender
-        # This prevents us from overwriting an existing hit chunk with a null chunk
         if other.hit_chunk and not isinstance(other.hit_chunk, NuccChunkNull):
             self.hit_chunk = other.hit_chunk
-
         self.coord_chunk = other.coord_chunk
         self.coord_index = other.coord_index
 
@@ -405,7 +418,7 @@ class RiggingFlag(IntFlag):
 
     UNSKINNED = 0x01  # Storm eyes and JoJo teeth
     SKINNED = 0x02  # JoJo eyes
-    BODY = 0x04
+    OUTLINE = 0x04
 
     TEETH = 0x05  # Storm teeth
     FULL = 0x06  # Body and tongue
@@ -459,6 +472,7 @@ class MaterialTextureGroup:
         return iter(self.texture_chunks)
 
 
+
 class NuccChunkAnm(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkAnm, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.data = br_chunk.data
@@ -496,3 +510,36 @@ class NuccChunkAnm(NuccChunk):
 
         # Get the "other" entries from the entry list
         self.other_entries = [e for e in self.entries if e.clump is None]
+
+
+class NuccChunkModelHit(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkModelHit, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        self.data = br_chunk.data
+        self.has_data = True
+        self.has_props = True
+        self.extension = '.modelhit'
+
+        self.mesh_count = br_chunk.mesh_count
+        self.total_vertex_size = br_chunk.total_vertex_size
+
+        self.vertex_sections: List[ModelHit] = list()
+        for hit in br_chunk.vertex_sections:
+            h = ModelHit()
+            h.init_data(hit)
+            self.vertex_sections.append(h)
+
+
+class ModelHit:
+    def init_data(self, hit: BrModelHit):
+        self.mesh_vertex_size = hit.mesh_vertex_size
+        self.unk_count = hit.unk_count
+        self.flags = hit.flags
+        self.vertex_count = hit.mesh_vertex_size * 3
+        self.mesh_vertices = hit.mesh_vertices
+
+
+class NuccChunkBillboard(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+        self.data = br_chunk.data
+
+
