@@ -2,6 +2,7 @@ from enum import IntFlag
 from typing import Dict, Iterator, List, Optional, Set
 
 from ..util import *
+from .anm import AnmClump, AnmEntry
 from .br.br_nucc import *
 from .br.br_nud import *
 from .br.br_nut import *
@@ -34,7 +35,7 @@ class NuccChunk:
         self.chunks = [c for c in chunks if not isinstance(
             c, (NuccChunkPage, NuccChunkIndex))]
 
-    def init_data(self, br_chunk: BrNuccChunk, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunk, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         """Initializes the data of this `NuccChunk` from a `BrNuccChunk`, using a chunk list and a list of
         local page indices for properly setting references to other `NuccChunk`s
         """
@@ -131,7 +132,7 @@ class NuccChunkTexture(NuccChunk):
         # Set these to None in case a texture is a reference only and isn't contained in the xfbin
         self.data = self.nut = None
 
-    def init_data(self, br_chunk: BrNuccChunkTexture, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkTexture, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.extension = '.nut'
 
         self.data = br_chunk.data
@@ -146,7 +147,7 @@ class NuccChunkTexture(NuccChunk):
 
 
 class NuccChunkDynamics(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkDynamics, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
@@ -204,7 +205,8 @@ class Dynamics2:
 
 class NuccChunkClump(NuccChunk):
 
-    def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkClump, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
+
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
@@ -296,7 +298,7 @@ class ClumpModelGroup:
 
 
 class NuccChunkCoord(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkCoord, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkCoord, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
@@ -349,7 +351,7 @@ class CoordNode:
 
 
 class NuccChunkModel(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkModel, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkModel, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.extension = '.nud'
 
         self.data = br_chunk.data
@@ -427,7 +429,7 @@ class RiggingFlag(IntFlag):
 
 
 class NuccChunkMaterial(NuccChunk):
-    def init_data(self, br_chunk: BrNuccChunkMaterial, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
+    def init_data(self, br_chunk: BrNuccChunkMaterial, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
         self.data = br_chunk.data
         self.has_data = True
         self.has_props = True
@@ -470,6 +472,46 @@ class MaterialTextureGroup:
         return iter(self.texture_chunks)
 
 
+
+class NuccChunkAnm(NuccChunk):
+    def init_data(self, br_chunk: BrNuccChunkAnm, chunk_list: List['NuccChunk'], chunk_indices: List[int], chunk_refs: List['ChunkReference']):
+        self.data = br_chunk.data
+        self.has_data = True
+        self.has_props = True
+
+        self.anm_length = br_chunk.anm_length
+        self.frame_size = br_chunk.frame_size
+
+        # Set up the clumps
+        self.clumps: List[AnmClump] = list()
+        for br_anm_clump in br_chunk.clumps:
+            anm_clump = AnmClump()
+            anm_clump.init_data(br_anm_clump, chunk_refs)
+            self.clumps.append(anm_clump)
+
+        # Set up the child-parent relations in AnmBones
+        for p in br_chunk.coord_parents:
+            if -1 in [p.parent_clump_index, p.parent_coord_index, p.child_clump_index, p.child_coord_index]:
+                continue
+            
+            p: BrAnmCoordParent
+            parent = self.clumps[p.parent_clump_index].bones[p.parent_coord_index]
+            child = self.clumps[p.child_clump_index].bones[p.child_coord_index]
+            child.parent = parent
+            parent.children.append(child)
+
+        other_entry_chunks = list(map(lambda x: chunk_list[chunk_indices[x]], br_chunk.other_entry_indices))
+
+        # Set up the animation entries/bones
+        self.entries: List[AnmEntry] = [None] * len(br_chunk.entries)
+        for i, br_entry in enumerate(br_chunk.entries):
+            entry = self.entries[i] = AnmEntry()
+            entry.init_data(br_entry, self.frame_size, self.clumps, other_entry_chunks)
+
+        # Get the "other" entries from the entry list
+        self.other_entries = [e for e in self.entries if e.clump is None]
+
+
 class NuccChunkModelHit(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkModelHit, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
@@ -499,3 +541,5 @@ class ModelHit:
 class NuccChunkBillboard(NuccChunk):
     def init_data(self, br_chunk: BrNuccChunkBillboard, chunk_list: List['NuccChunk'], chunk_indices: List[int], reference_indices: List[int]):
         self.data = br_chunk.data
+
+

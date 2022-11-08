@@ -46,7 +46,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
 
             # Initialize the NuccChunk's data using the BrNuccChunk, the list of chunks, and the indices from the page
             chunk.init_data(br_page.chunksDict[index], chunks,
-                            br_page.pageChunkIndices, br_page.pageChunkReferences)
+                            br_page.pageChunkIndices, page.chunk_references)
 
             # Add the chunk to the page
             page.chunks.append(chunk)
