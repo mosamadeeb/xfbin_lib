@@ -18,11 +18,11 @@ class Nut:
 class NutTexture:
 
     def init_data(self, br_chunk: BrNutTexture):
-        self.total_size = br_chunk.total_size
-
         self.data_size = br_chunk.data_size
 
         self.header_size = br_chunk.header_size
+
+        self.total_size = self.data_size + self.header_size
 
         self.mipmap_count = br_chunk.mipmap_count
 
@@ -50,7 +50,7 @@ class NutTexture:
         else:
             self.mipmaps = br_chunk.mipmaps
             self.texture_data = br_chunk.texture_data
-
+        
 
 Pixel_Formats = {
     0: 'DXT1',
@@ -59,6 +59,6 @@ Pixel_Formats = {
     6: '5.5.5.1',
     7: '4.4.4.4',
     8: '5.6.5',
-    14: '8.8.8.8',
+    14: '8.8.8.X',
     17: '8.8.8.8',
 }

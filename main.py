@@ -81,10 +81,12 @@ def unpack(args):
             # Add chunks
             chunks = page_json['Chunks'] = [None] * len(page.chunks)
             for j, c in enumerate(page.chunks):
+                c:NuccChunkTexture
                 d = chunks[j] = dict()
                 d['File Name'] = c.name + '.' + (c.extension
                                                  if (args.file_data_only and c.extension != '')
                                                  else NuccChunk.get_nucc_str_short_from_type(type(c)).lower())
+                d['Version'] = c.version
                 d['Chunk'] = c.to_dict()
 
                 chunk_path = os.path.join(page_path, d['File Name'])
@@ -137,20 +139,20 @@ def repack(args):
 
                 # Read chunk maps
                 chunk_maps = list(map(lambda c: NuccChunk.create_from_nucc_type(
-                    c['Type'], c['Path'], c['Name']), page_json['Chunk Maps']))
+                    c['Type'], c['Path'], c['Name'], c['Version']), page_json['Chunk Maps']))
 
                 # Read chunk references
                 chunk_refs = page.chunk_references = [None] * len(page_json['Chunk References'])
                 for i, ref in enumerate(page_json['Chunk References']):
                     c = ref['Chunk']
                     chunk_refs[i] = ChunkReference(
-                        ref['Name'], NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name']))
+                        ref['Name'], NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name'], ['Version']))
 
                 # Read chunks
                 chunks = page.chunks = list()
                 for ch in page_json['Chunks']:
                     c = ch['Chunk']
-                    chunk = NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name'])
+                    chunk = NuccChunk.create_from_nucc_type(c['Type'], c['Path'], c['Name'], c['Version'])
                     chunk_path = os.path.join(root, d, ch['File Name'])
 
                     if not os.path.isfile(chunk_path):
@@ -165,7 +167,8 @@ def repack(args):
                     with open(chunk_path, 'rb') as f:
                         chunk.set_data(bytearray(f.read()), chunk_maps)
             except:
-                print(f'"_page.json" of directory "{d}" is invalid and will be skipped.')
+                #print(f'"_page.json" of directory "{d}" is invalid and will be skipped.')
+                print
 
         # We only want to look in the topmost directory
         break

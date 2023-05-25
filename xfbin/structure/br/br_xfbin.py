@@ -194,7 +194,7 @@ class BrChunkTable(BrStruct):
                                                         br_chunk.chunkMapIndex]]
 
         # Create and return a BrNuccChunk with the correct type from the map
-        return BrNuccChunk.create_from_nucc_type(*self.get_props_from_chunk_map(chunk_map), br_chunk.data)
+        return BrNuccChunk.create_from_nucc_type(*self.get_props_from_chunk_map(chunk_map), br_chunk.data, br_chunk.nuccId, br_chunk.unk)
 
     def __br_write__(self, br: 'BinaryReader'):
         # Set up the indices dictionaries
@@ -288,16 +288,19 @@ class BrChunkReference(BrStruct):
     def __br_write__(self, br: 'BinaryReader', chunk_reference: ChunkReference, chunk_name_indices, chunkMapDict):
         # These are supposed to always exist. If they do not, then the xfbin somehow lost some data, and we can't
         # really recover from that anyway
+        #print(chunk_name_indices)
+        print(f'reference {chunk_reference}')
+        print(f'name {chunk_reference.name}')
+        print(f'chunk {chunk_reference.chunk}')
         br.write_uint32(chunk_name_indices[chunk_reference.name])
         br.write_uint32(chunkMapDict[chunk_reference.chunk])
-
 
 class BrChunk(BrStruct):
     def __br_read__(self, br: BinaryReader):
         self.size = br.read_uint32()
         self.chunkMapIndex = br.read_uint32()
-        self.nuccId = br.read_uint16()
-        self.unk = br.read_uint16()
+        self.nuccId = br.read_uint16() #Changes how some chunks are read
+        self.unk = br.read_uint16() #Some animation chunks have this set to different values other than 0
         self.data = br.read_bytes(self.size)
 
     def __br_write__(self, br: 'BinaryReader', br_nucc_chunk: BrNuccChunk, chunkIndexDict: IterativeDict, *args):

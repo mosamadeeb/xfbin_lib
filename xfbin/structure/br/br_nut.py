@@ -1,5 +1,5 @@
 from ...util import *
-
+import threading
 
 # Based on Smash Forge Nut implementation
 # https://github.com/jam1garner/Smash-Forge/blob/master/Smash%20Forge/Filetypes/Textures/NUT.cs
@@ -28,6 +28,7 @@ class BrNut(BrStruct):
 
 class BrNutTexture(BrStruct):
     def __br_read__(self, br: BinaryReader, nut: BrNut):
+        pos = br.pos()
         self.total_size = br.read_uint32()
         br.read_uint32()
 
@@ -61,7 +62,7 @@ class BrNutTexture(BrStruct):
 
         if self.mipmap_count > 1:
             self.mipmap_sizes = br.read_uint32(self.mipmap_count)
-            br.align_pos(0x10)
+            br.align_pos(16)
 
         # eXt and GIDX
         br.seek(0x18, Whence.CUR)
@@ -95,6 +96,7 @@ class BrNutTexture(BrStruct):
             self.texture_data = self.mipmaps[0]
 
     def __br_write__(self, br: 'BinaryReader', nutTex: 'NutTexture'):
+        start = br.pos()
         br.write_uint32(nutTex.total_size)
         br.write_uint32(0)
 
@@ -127,9 +129,10 @@ class BrNutTexture(BrStruct):
         if nutTex.mipmap_count > 1:
             for mip in nutTex.mipmaps:
                 br.write_uint32(len(mip))
+                
+            if (br.pos() - start) % 0x10 != 0:
+                br.write_bytes(b'\x00' * (0x10 - ((br.pos() - start) % 0x10)))
 
-        while br.pos() % 0x10 != 0:
-            br.write_uint8(0)
         br.write_str('eXt')
         br.write_uint8(0)
         br.write_uint32(0x20)

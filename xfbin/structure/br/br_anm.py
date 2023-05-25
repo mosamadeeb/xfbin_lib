@@ -29,6 +29,7 @@ class AnmEntryFormat(IntEnum):
     MATERIAL = 4
     LIGHTDIRC = 5
     LIGHTPOINT = 6
+    AMBIENT = 8
 
 
 class AnmCurveFormat(IntEnum):
@@ -124,7 +125,7 @@ class BrAnmEntry(BrStruct):
                     curve[i] = br.read_float(1)
 
             else:
-                raise Exception('nuccChunkAnm: Unsupported curve format')
+                print(f'nuccChunkAnm: Unsupported curve format {header.curve_format}')
 
             br.align_pos(4)
 

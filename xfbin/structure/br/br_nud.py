@@ -124,7 +124,10 @@ class BrNudMeshGroup(BrStruct):
         self.nameStart = br.read_uint32()
 
         with br.seek_to(self.nameStart + nud.nameStart):
-            self.name = br.read_str()
+            try:
+                self.name = br.read_str()
+            except:
+                self.name = 'Unknown'
 
         self.unk = br.read_uint16()
         self.boneFlags = br.read_uint16()
@@ -514,7 +517,7 @@ class BrNudMaterialTexture(BrStruct):
         self.unk1 = br.read_uint8()
 
         br.read_uint32()
-        self.unk2 = br.read_int16()
+        self.unk2 = br.read_uint16()
 
     def __br_write__(self, br: 'BinaryReader', texture: 'NudMaterialTexture') -> None:
         br.write_int32(texture.unk0)

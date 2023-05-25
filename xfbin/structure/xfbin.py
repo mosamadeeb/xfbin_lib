@@ -164,8 +164,8 @@ class Xfbin:
 
         clump_page = Page()
         materials: List[NuccChunkMaterial] = list()
-        textures: List[NuccChunkTexture] = list()
-        texture_pages: List[Page] = list()
+        #textures: List[NuccChunkTexture] = list()
+        #texture_pages: List[Page] = list()
 
         # Remove the old clump page if it exists
         existing_page = self.get_chunk_page(clump)
@@ -192,19 +192,19 @@ class Xfbin:
         # Add the unique material chunks
         for material in list(dict.fromkeys(materials)):
             clump_page.add_chunk(material)
-            textures.extend(list(chain(*material.texture_groups)))
+            #textures.extend(list(chain(*material.texture_groups)))
 
         # Add the unique texture chunks
-        for texture in list(dict.fromkeys(textures)):
+        '''for texture in list(dict.fromkeys(textures)):
             # Add each texture chunk to a new page or update its page if it exists
             # If the chunk does not have data, ignore it
             if texture.nut or texture.data:
                 if not self.update_chunk_page(texture):
                     texture_pages.append(Page())
-                    texture_pages[-1].add_chunk(texture)
+                    texture_pages[-1].add_chunk(texture)'''
 
         # Add the new texture pages before the clump page
-        self.pages.extend(texture_pages)
+        #self.pages.extend(texture_pages)
         self.pages.append(clump_page)
 
         return clump_page

@@ -33,7 +33,7 @@ class AnmClump:
     def init_data(self, br_anm_clump: BrAnmClump, chunk_refs: List['ChunkReference']):
         clump_ref = chunk_refs[br_anm_clump.clump_index]
 
-        self.name = clump_ref.name
+        self.name = clump_ref.chunk.name
         self.chunk = clump_ref.chunk
 
         self.bones = list()
@@ -155,7 +155,7 @@ def create_anm_curve(data_path: AnmDataPath, curve_format: AnmCurveFormat, curve
         elif curve_format == AnmCurveFormat.SHORT4:
             curve.data_path = AnmDataPath.ROTATION_QUATERNION
             curve.keyframes = list(map(lambda i, v: AnmKeyframe(
-                frame_size * i, tuple(map(lambda x: x / 0x4000, v))), range(len(curve_values)), curve_values))
+                frame_size * i, tuple(map(lambda x: x / 0x8000, v))), range(len(curve_values)), curve_values))
 
     elif data_path == AnmDataPath.SCALE:
         if AnmCurveFormat(curve_format).name.startswith('FLOAT3'):
