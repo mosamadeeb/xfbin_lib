@@ -25,14 +25,16 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
     # Create NuccChunks with the correct type from the chunk map
     chunks: List[NuccChunk] = list()
     for m in table.chunkMaps:
-        chunks.append(NuccChunk.create_from_nucc_type(*table.get_props_from_chunk_map(m)))
+        chunks.append(NuccChunk.create_from_nucc_type(
+            *table.get_props_from_chunk_map(m)))
 
     xfbin = Xfbin()
     for br_page in br_xfbin.pages:
         page = Page()
 
         # Used for writing the page's JSON for repacking
-        page.initial_page_chunks = list(map(lambda x: chunks[x], br_page.pageChunkIndices))
+        page.initial_page_chunks = list(
+            map(lambda x: chunks[x], br_page.pageChunkIndices))
 
         # Create ChunkReferences and add them to the page's list
         page.chunk_references = list(map(lambda x: ChunkReference(
@@ -44,7 +46,7 @@ def read_xfbin(file: Union[str, bytearray]) -> Xfbin:
 
             # Initialize the NuccChunk's data using the BrNuccChunk, the list of chunks, and the indices from the page
             chunk.init_data(br_page.chunksDict[index], chunks,
-                            br_page.pageChunkIndices, br_page.pageChunkReferences)
+                            br_page.pageChunkIndices, page.chunk_references)
 
             # Add the chunk to the page
             page.chunks.append(chunk)

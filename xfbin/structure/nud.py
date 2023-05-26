@@ -27,8 +27,10 @@ class Nud:
         lower = 0xFF_FF
         higher = 0
         for mesh in [m for m in self.mesh_groups[0].meshes if m.vertices and m.vertices[0].bone_ids]:
-            lower = min(lower, min(chain(*map(lambda x: x.bone_ids, mesh.vertices))))
-            higher = max(higher, max(chain(*map(lambda x: x.bone_ids, mesh.vertices))))
+            lower = min(lower, min(
+                chain(*map(lambda x: x.bone_ids, mesh.vertices))))
+            higher = max(higher, max(
+                chain(*map(lambda x: x.bone_ids, mesh.vertices))))
 
         if lower > higher:
             return (0, 0)
@@ -153,7 +155,8 @@ class NudVertex:
         self.bitangent = br_vertex.biTangents if br_vertex.biTangents else None
         self.tangent = br_vertex.tangents if br_vertex.tangents else None
 
-        self.color = tuple(map(lambda x: int(x), br_vertex.color)) if br_vertex.color else None
+        self.color = tuple(map(lambda x: int(x), br_vertex.color)
+                           ) if br_vertex.color else None
         self.uv = br_vertex.uv
 
         self.bone_ids = br_vertex.boneIds
